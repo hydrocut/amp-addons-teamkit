@@ -9,6 +9,22 @@ tous les jours sur les serveurs de [TeamKit](https://www.teamkit.fr). *English v
 | **Thème TeamKit-HUD** | le même, avec une page État façon écran de jeu : trois grands cadrans lumineux et de gros boutons ronds | un thème CSS, la voie officielle |
 | **Barre de stats** | des tuiles au-dessus de la liste des instances (machine, serveurs en marche, joueurs, RAM, CPU, disque et sa limite) et une pastille `💾 X Go` sur chaque carte | un fichier JavaScript + une ligne dans `AMP.html` |
 
+## Captures
+
+**Page Instances avec la barre de stats** et les pastilles `💾` :
+
+![Page Instances avec la barre de stats TeamKit](screenshots/instances-with-stats.png)
+
+**La même page sans l'ajout** (thème seul) :
+
+![Page Instances, thème seul](screenshots/instances-without-stats.png)
+
+**TeamKit-HUD : la page État d'un serveur**, trois grands cadrans et boutons ronds :
+
+![Page État avec le thème TeamKit-HUD](screenshots/status-hud.png)
+
+*Captures prises sur le panel TeamKit ; l'adresse IP est un exemple (203.0.113.x) ou floutée.*
+
 ## 1. Les thèmes (officiel, sans risque)
 
 AMP charge tout fichier CSS posé dans `ADS01/WebRoot/Themes/`.

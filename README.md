@@ -10,6 +10,22 @@ Small, unofficial customisations for [AMP by CubeCoders](https://cubecoders.com/
 | **TeamKit-HUD theme** | the same theme, plus a game-HUD Status page: three large glowing gauges and big round buttons | a CSS theme, the official way |
 | **Stats bar** | tiles above the instance list: machine, servers running, players online, RAM, CPU, datastore usage and limit; a `💾 X GB` badge on each instance card | one JavaScript file + one line in `AMP.html` |
 
+## Screenshots
+
+**Instances page with the stats bar** (machine, servers, players, RAM, CPU, datastore) and the `💾` disk badges:
+
+![Instances page with the TeamKit stats bar](screenshots/instances-with-stats.png)
+
+**The same page without the add-on** (theme only):
+
+![Instances page, theme only](screenshots/instances-without-stats.png)
+
+**TeamKit-HUD: the instance Status page** with three large gauges and round buttons:
+
+![Status page with the TeamKit-HUD theme](screenshots/status-hud.png)
+
+*Screenshots taken on the TeamKit panel; the IP address is an example (203.0.113.x) or blurred.*
+
 ## 1. Themes (official, safe)
 
 AMP loads any CSS file placed in `ADS01/WebRoot/Themes/`.

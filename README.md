@@ -12,9 +12,13 @@ Small, unofficial customisations for [AMP by CubeCoders](https://cubecoders.com/
 
 ## Screenshots
 
-**Instances page with the stats bar** (machine, servers, players, RAM, CPU, datastore) and the `💾` disk badges:
+The stats bar works in **all four layouts** of the Instances page (the four buttons at the top right: cards or list, by group or by machine). Each instance also gets a `💾` disk badge.
 
-![Instances page with the TeamKit stats bar](screenshots/instances-with-stats.png)
+| Cards, by group | List, by group |
+|---|---|
+| ![Cards by group, with the stats bar](screenshots/instances-with-stats.png) | ![List by group, with the stats bar](screenshots/instances-list-groups.png) |
+| **Cards, by machine** | **List, by machine** |
+| ![Cards by machine, with the stats bar](screenshots/instances-cards-machine.png) | ![List by machine, with the stats bar](screenshots/instances-list-machine.png) |
 
 **The same page without the add-on** (theme only):
 
@@ -24,7 +28,7 @@ Small, unofficial customisations for [AMP by CubeCoders](https://cubecoders.com/
 
 ![Status page with the TeamKit-HUD theme](screenshots/status-hud.png)
 
-*Screenshots taken on the TeamKit panel; the IP address is an example (203.0.113.x) or blurred.*
+*Screenshots taken on the TeamKit panel; server addresses are hidden.*
 
 ## 1. Themes (official, safe)
 

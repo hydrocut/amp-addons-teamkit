@@ -11,9 +11,13 @@ tous les jours sur les serveurs de [TeamKit](https://www.teamkit.fr). *English v
 
 ## Captures
 
-**Page Instances avec la barre de stats** et les pastilles `💾` :
+La barre de stats marche dans **les quatre vues** de la page Instances (les quatre boutons en haut à droite : cartes ou liste, par groupe ou par machine). Chaque instance a aussi sa pastille `💾`.
 
-![Page Instances avec la barre de stats TeamKit](screenshots/instances-with-stats.png)
+| Cartes, par groupe | Liste, par groupe |
+|---|---|
+| ![Cartes par groupe, avec la barre de stats](screenshots/instances-with-stats.png) | ![Liste par groupe, avec la barre de stats](screenshots/instances-list-groups.png) |
+| **Cartes, par machine** | **Liste, par machine** |
+| ![Cartes par machine, avec la barre de stats](screenshots/instances-cards-machine.png) | ![Liste par machine, avec la barre de stats](screenshots/instances-list-machine.png) |
 
 **La même page sans l'ajout** (thème seul) :
 
@@ -23,7 +27,7 @@ tous les jours sur les serveurs de [TeamKit](https://www.teamkit.fr). *English v
 
 ![Page État avec le thème TeamKit-HUD](screenshots/status-hud.png)
 
-*Captures prises sur le panel TeamKit ; l'adresse IP est un exemple (203.0.113.x) ou floutée.*
+*Captures prises sur le panel TeamKit ; les adresses des serveurs sont masquées.*
 
 ## 1. Les thèmes (officiel, sans risque)
 

@@ -16,7 +16,8 @@
   var CLE = 'tkLang', DICO_URL = '/Locale/fr.json';
   // zones jamais traduites : sorties du jeu, fichiers, saisies, noms choisis par les gens
   var SAUTER = 'script,style,pre,code,textarea,input,[contenteditable="true"],' +
-    '#consoleArea,#consoleUsers,#fileManagerList,#editorFilename,.fmPathSegment,#backupsList tbody,.ServerEntry h3,.tk-lang';
+    '#consoleArea,#consoleUsers,#fileManagerList,#editorFilename,.fmPathSegment,#backupsList tbody,.ServerEntry h3,.tk-lang,' +
+    '.scheduleTriggerVariable'; // variables d'un déclencheur (Time, UserID…) : des noms à recopier, jamais à traduire
   var dico = null, vus = typeof WeakSet === 'function' ? new WeakSet() : null;
 
   function langue() {
@@ -77,11 +78,12 @@
       });
       if (prevu) return;
       prevu = true;
-      (doc.defaultView || window).requestAnimationFrame(function () {
+      // une minuterie et pas requestAnimationFrame : Chrome met ce dernier en pause dans un onglet en arrière-plan
+      setTimeout(function () {
         prevu = false;
         var lot = file; file = [];
         lot.forEach(function (x) { if (x.nodeType === 1 && !x.isConnected) return; parcourir(x); });
-      });
+      }, 60);
     }).observe(doc.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['placeholder', 'title', 'aria-label'] });
   }
   function cadres() {

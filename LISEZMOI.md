@@ -269,7 +269,7 @@ mot de passe seul dans le `password_file` (`chmod 600`).
 
 AMP 2.8 contient déjà un moteur de traduction (`Scripts/Locale.js`, dictionnaires dans `WebRoot/Locale/<iso>.json`),
 mais rien dans l'interface ne l'allume. `TeamKitLang.js` le fait, avec `fr.json`, un dictionnaire français d'environ
-2 900 phrases : les pages du panel, les réglages d'ADS, les permissions, les tâches du planificateur, et la
+3 200 phrases : les pages du panel, les réglages d'ADS, les permissions, les tâches et déclencheurs du planificateur, et la
 **Configuration** de 22 sortes d'instances (Minecraft Java et Bedrock, Garry's Mod, Counter-Strike 1.6 et Source,
 FiveM, Barotrauma, DDNet, Teeworlds, Luanti, BeamMP, SA-MP, RimWorld, Eco, Empyrion, Euro Truck Simulator 2,
 Farming Simulator 25, Node.js, MySQL, MariaDB, PostgreSQL…).

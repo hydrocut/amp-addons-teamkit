@@ -269,7 +269,7 @@ alone in the `password_file` (`chmod 600`).
 
 AMP 2.8 already contains a translation engine (`Scripts/Locale.js`, dictionaries in `WebRoot/Locale/<iso>.json`),
 but nothing in the interface turns it on. `TeamKitLang.js` does, with `fr.json`, a French dictionary of about
-2 900 phrases: the panel pages, ADS settings, permissions, scheduler tasks, and the **Configuration** of 22 kinds of
+3 200 phrases: the panel pages, ADS settings, permissions, scheduler tasks and triggers, and the **Configuration** of 22 kinds of
 instances (Minecraft Java and Bedrock, Garry's Mod, Counter-Strike 1.6 and Source, FiveM, Barotrauma, DDNet,
 Teeworlds, Luanti, BeamMP, SA-MP, RimWorld, Eco, Empyrion, Euro Truck Simulator 2, Farming Simulator 25, Node.js,
 MySQL, MariaDB, PostgreSQL…).

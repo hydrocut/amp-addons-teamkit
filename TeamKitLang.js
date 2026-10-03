@@ -111,7 +111,7 @@
       '#tk-lang button[aria-pressed="true"]{background:rgba(0,240,255,.16);color:var(--tk-texte,#e3e6ee)}' +
       '#tk-lang button:focus-visible{outline:2px solid #00f0ff;outline-offset:1px}' +
       // dans la barre du haut d'AMP, juste avant la recherche : bien visible, ne cache rien
-      '#tk-lang.tk-lang-barre{position:static;align-self:center;margin:0 0 0 16px;opacity:1;flex:none}';
+      '#tk-lang.tk-lang-barre{position:relative;z-index:50;align-self:center;margin:0 0 0 16px;opacity:1;flex:none}';
     document.head.appendChild(s);
     var b = document.createElement('div');
     b.id = 'tk-lang'; b.className = 'tk-lang'; b.setAttribute('role', 'group');

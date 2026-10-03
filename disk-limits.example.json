@@ -1,0 +1,28 @@
+{
+  "display": "instance-limit",
+  "default_limit_gb": 0,
+  "templates": {
+    "Minecraft": 20,
+    "Empyrion Galactic Survival": 40
+  },
+  "instances": {
+    "MyRustServer01": 60
+  },
+  "warn_pct": 90,
+  "stop_pct": 100,
+  "enforce": false,
+  "webhook": "",
+  "amp": {
+    "url": "http://127.0.0.1:8080",
+    "user": "",
+    "password_file": "/etc/amp-addons-teamkit/amp-password",
+    "verify_tls": true
+  },
+  "ads_instance": "ADS01",
+  "ampdata": "/home/amp/.ampdata/instances",
+  "import": {
+    "url": "",
+    "header": "",
+    "secret_file": ""
+  }
+}

@@ -8,6 +8,7 @@ tous les jours sur les serveurs de [TeamKit](https://www.teamkit.fr). *English v
 | **Thème TeamKit** | thème sombre bleu nuit, accents cyan et violet doux, pensé pour les longues sessions | un thème CSS, la voie officielle |
 | **Thème TeamKit-HUD** | le même, avec une page État façon écran de jeu : trois grands cadrans lumineux et de gros boutons ronds | un thème CSS, la voie officielle |
 | **Barre de stats** | des tuiles au-dessus de la liste des instances (machine, serveurs en marche, joueurs, RAM, CPU, disque et sa limite), une pastille `💾 X Go` sur chaque carte et une quatrième jauge **Disque** sur la page État de chaque serveur | un fichier JavaScript + une ligne dans `AMP.html` |
+| **Limites disque et gardien** | une limite par jeu ou par serveur dans un fichier de config : jauges et pastilles en `occupé / limite`, et (si on veut) le jeu coupé quand le disque est plein, gestionnaire de fichiers et SFTP restant ouverts | `disk-guard.py`, toutes les 5 minutes (facultatif) |
 
 ## Captures
 
@@ -124,6 +125,68 @@ Dans la console : `localStorage.tkStatsOff = '1'` (et `localStorage.removeItem('
 
 Remettre la sauvegarde `AMP.html.before-stats-*` la plus récente (ou supprimer la ligne `TeamKitStats.js`), puis supprimer `WebRoot/Scripts/TeamKitStats.js`
 et la ligne cron si elle a été ajoutée.
+
+## 3. Limites disque et gardien (facultatif)
+
+AMP ne limite pas le disque d'une instance. `disk-guard.py` l'ajoute, avec un seul fichier de config :
+
+- **Affichage** : la jauge Disque et les pastilles `💾` montrent `occupé / limite` et passent en **orange** au seuil
+  d'alerte, en **rouge** à 100 %. La barre des admins compte les serveurs au-delà de leur limite.
+- **Gardien** (coupé par défaut) : au-delà du seuil de coupure, il arrête le **jeu** de l'instance (`Core/Stop`).
+  L'instance AMP reste allumée, donc son **gestionnaire de fichiers et le SFTP restent ouverts** pour faire le ménage.
+  Un jeu relancé alors que le disque est toujours plein est recoupé au passage suivant. Webhook Discord facultatif
+  (alerte une fois par jour, coupure une fois par heure).
+
+Python 3.7+, bibliothèque standard seulement, lancé toutes les 5 minutes par cron ou une minuterie systemd.
+
+### Le fichier de config
+
+Copier `disk-limits.example.json` en `/etc/amp-addons-teamkit/disk-limits.json` (`chmod 600` : il peut contenir un webhook).
+
+| Clé | Rôle |
+|---|---|
+| `display` | ce que compare la jauge : `instance-limit` (ce serveur / sa limite, repli sur le stockage s'il n'en a pas), `instance-datastore` (ce serveur / limite du stockage), `all-datastore` (tous les serveurs / limite du stockage) |
+| `default_limit_gb` | limite de tout serveur sans limite plus précise (`0` = aucune) |
+| `templates` | limite par jeu, en Go, d'après le nom affiché par AMP (`ModuleDisplayName`, ex. `"Empyrion Galactic Survival"`, ou `Module`, ex. `"Minecraft"`) |
+| `instances` | limite par serveur, en Go, par `InstanceName`, `FriendlyName` ou `InstanceID` — prime sur `templates` |
+| `warn_pct`, `stop_pct` | seuils d'alerte et de coupure, en % de la limite (90 et 100 par défaut) |
+| `enforce` | `false` = affichage seul (défaut). `true` = coupe le jeu au-delà de `stop_pct` |
+| `webhook` | adresse d'un webhook Discord pour les alertes et les coupures (facultatif) |
+| `amp` | `url`, `user`, `password_file` : un compte AMP qui voit et peut arrêter les instances. Obligatoire pour `enforce`, et pour publier les serveurs par identifiant plutôt que par nom |
+| `ads_instance`, `ampdata` | où se trouve ADS (`ADS01`, `/home/amp/.ampdata/instances`) |
+| `import` | facultatif : `url` d'un JSON `{"instances_mb": {"<InstanceID>": Mo}, "warn_pct": n, "stop_pct": n}` (avec `header` et `secret_file` s'il faut une clé), pour prendre les limites dans ton propre panel ou ta base |
+
+Ordre de priorité pour un serveur : `instances` > `import` > `templates` > `default_limit_gb`.
+
+### Installer
+
+```sh
+sudo install -d -m 755 /opt/amp-addons-teamkit && sudo install -d -m 700 /etc/amp-addons-teamkit
+sudo install -m 755 disk-guard.py /opt/amp-addons-teamkit/
+sudo install -m 600 disk-limits.example.json /etc/amp-addons-teamkit/disk-limits.json   # puis le remplir
+sudo python3 /opt/amp-addons-teamkit/disk-guard.py --dry-run --verbose                  # montre ce qu'il ferait
+```
+
+Puis toutes les 5 minutes, par exemple dans `/etc/cron.d/amp-disk-guard` :
+
+```sh
+*/5 * * * * root /usr/bin/python3 /opt/amp-addons-teamkit/disk-guard.py >> /var/log/amp-disk-guard.log 2>&1
+```
+
+Il écrit `WebRoot/Scripts/TeamKitDisk.json` dans l'instance ADS (seulement si quelque chose a changé) : mode
+d'affichage, seuils et limites par identifiant de serveur ou nom de jeu. **Ce fichier se lit sans être connecté** :
+il ne contient jamais le compte, le mot de passe ni le webhook. Renseigner `amp` pour que les noms de serveurs soient
+publiés sous forme d'identifiants.
+
+Pour le compte AMP, créer dans ADS un utilisateur dédié qui a accès aux instances (et seulement ça), et mettre son
+mot de passe seul dans le `password_file` (`chmod 600`).
+
+### À savoir
+
+- Les chiffres de disque viennent d'ADS (`DiskUsageMB`), mesurés de temps en temps : après un ménage, la jauge peut
+  mettre quelques minutes à suivre, et un jeu relancé trop tôt peut être recoupé une fois.
+- Couper le jeu n'est pas un vrai quota : ce qu'on dépose pendant que le jeu est arrêté (envoi en SFTP) n'est pas bloqué.
+- Tester d'abord avec `"enforce": false` et `--dry-run`.
 
 ## Licence
 

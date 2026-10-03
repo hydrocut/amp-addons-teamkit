@@ -9,6 +9,7 @@ Small, unofficial customisations for [AMP by CubeCoders](https://cubecoders.com/
 | **TeamKit theme** | dark night-blue theme with soft cyan and violet accents, tuned for long sessions | a CSS theme, the official way |
 | **TeamKit-HUD theme** | the same theme, plus a game-HUD Status page: three large glowing gauges and big round buttons | a CSS theme, the official way |
 | **Stats bar** | tiles above the instance list: machine, servers running, players online, RAM, CPU, datastore usage and limit; a `💾 X GB` badge on each instance card; a fourth **Disk** gauge on the Status page of every instance | one JavaScript file + one line in `AMP.html` |
+| **Disk limits and guard** | a limit per game or per instance in one config file: gauges and badges show `used / limit`, and (optionally) the game is stopped when the disk is full, File Manager and SFTP staying open | `disk-guard.py`, every 5 minutes (optional) |
 
 ## Screenshots
 
@@ -129,6 +130,66 @@ and the cron line if you added one.
 - Placement: the bar is inserted before the first visible `div.ServerGroupContainer`; badges go under the `h3` of each `div.ServerEntry`.
 - Disk gauge colour: `#f0b35a` in `styleCadre()`; the gauge is placed after the Users gauge (`ActiveUsers`).
 - Colours come from the theme variables (`--tk-carte`, `--tk-bord`, `--tk-texte`…) with dark fallbacks, so it also fits other themes.
+
+## 3. Disk limits and disk guard (optional)
+
+AMP does not limit the disk of an instance. `disk-guard.py` adds that, with one config file:
+
+- **Display**: the Disk gauge and the `💾` badges show `used / limit` and turn **orange** at the warning threshold,
+  **red** at 100 %. The admin bar counts the instances over their limit.
+- **Guard** (off by default): above the stop threshold it stops the **game** of the instance (`Core/Stop`).
+  The AMP instance itself keeps running, so its **File Manager and SFTP stay open** to delete files. An instance
+  restarted while still full is stopped again on the next run. Optional Discord webhook (warning once a day, stop once an hour).
+
+Python 3.7+, standard library only, runs every 5 minutes from cron or a systemd timer.
+
+### The config file
+
+Copy `disk-limits.example.json` to `/etc/amp-addons-teamkit/disk-limits.json` (`chmod 600`: it may hold a webhook).
+
+| Key | Meaning |
+|---|---|
+| `display` | what the Disk gauge compares: `instance-limit` (this instance / its own limit, falls back to the datastore when it has none), `instance-datastore` (this instance / datastore limit), `all-datastore` (all instances / datastore limit) |
+| `default_limit_gb` | limit for every instance without a more precise one (`0` = none) |
+| `templates` | limit per game, in GB, by the name AMP shows (`ModuleDisplayName`, e.g. `"Empyrion Galactic Survival"`, or `Module`, e.g. `"Minecraft"`) |
+| `instances` | limit per instance, in GB, by `InstanceName`, `FriendlyName` or `InstanceID` — wins over `templates` |
+| `warn_pct`, `stop_pct` | warning and stop thresholds, in % of the limit (default 90 and 100) |
+| `enforce` | `false` = display only (default). `true` = stop the game above `stop_pct` |
+| `webhook` | optional Discord webhook URL for warnings and stops |
+| `amp` | `url`, `user`, `password_file`: an AMP account allowed to see and stop the instances. Needed for `enforce`, and to turn instance names into IDs |
+| `ads_instance`, `ampdata` | where ADS lives (`ADS01`, `/home/amp/.ampdata/instances`) |
+| `import` | optional: `url` of a JSON `{"instances_mb": {"<InstanceID>": MB}, "warn_pct": n, "stop_pct": n}` (plus `header` and `secret_file` if it needs a key), to take the limits from your own panel or database |
+
+Precedence for one instance: `instances` > `import` > `templates` > `default_limit_gb`.
+
+### Install
+
+```sh
+sudo install -d -m 755 /opt/amp-addons-teamkit && sudo install -d -m 700 /etc/amp-addons-teamkit
+sudo install -m 755 disk-guard.py /opt/amp-addons-teamkit/
+sudo install -m 600 disk-limits.example.json /etc/amp-addons-teamkit/disk-limits.json   # then edit it
+sudo python3 /opt/amp-addons-teamkit/disk-guard.py --dry-run --verbose                  # shows what it would do
+```
+
+Then every 5 minutes, for example in `/etc/cron.d/amp-disk-guard`:
+
+```sh
+*/5 * * * * root /usr/bin/python3 /opt/amp-addons-teamkit/disk-guard.py >> /var/log/amp-disk-guard.log 2>&1
+```
+
+It writes `WebRoot/Scripts/TeamKitDisk.json` in the ADS instance (only when something changed): display mode,
+thresholds and limits by instance ID or game name. **This file is readable without logging in**: it never holds the
+account, the password or the webhook. Configure `amp` so that instance names are published as IDs.
+
+For the AMP account, create a dedicated user in ADS with access to the instances (and only that); put its password
+alone in the `password_file` (`chmod 600`).
+
+### Good to know
+
+- Disk figures come from ADS (`DiskUsageMB`), measured now and then: after a clean-up, the gauge can take a few
+  minutes to follow, and a game restarted too early may be stopped once more.
+- Stopping the game is not a hard quota: files written while the game is stopped (uploads by SFTP) are not blocked.
+- Test with `"enforce": false` and `--dry-run` first.
 
 ## Licence
 

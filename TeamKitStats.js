@@ -7,6 +7,8 @@
    Unofficial add-on: it only reads what ADS already sends to the page (API.ADSModule.GetInstancesAsync
    and GetDatastoresAsync), changes nothing, and fails silently. The bar is shown to users who have
    Core.UserManagement.ViewActiveSessions (admins); disk badges are shown to everyone for their own instances.
+   Disk limits (optional): disk-guard.py publishes /Scripts/TeamKitDisk.json from disk-limits.json; the gauge and
+   the badges then show "used / limit" and turn orange then red near the limit. Without that file: disk / datastore.
    An AMP update rewrites AMP.html: re-run install-stats.sh afterwards. See README.md. */
 (function () {
   'use strict';
@@ -22,15 +24,42 @@
     go: ' Go', machine: 'Machine', serveur: 'Serveur', threads: ' threads · ', deRam: ' de RAM', serveurs: 'Serveurs', enJeu: ' en jeu',
     demarres: ' démarrés sur ', joueurs: 'Joueurs connectés', sur: 'sur ', places: ' places ouvertes', ram: 'RAM des serveurs', des: ' % des ',
     cpu: 'CPU cumulé', somme: 'somme des serveurs démarrés', disque: 'Disque des serveurs', limite: ' % de la limite de ', restants: ' restants',
-    instances: ' instances', maj: 'mis à jour à ', pastille: 'Disque occupé par cette instance (relevé par ADS)', tuileDisque: 'Disque'
+    instances: ' instances', maj: 'mis à jour à ', pastille: 'Disque occupé par cette instance (relevé par ADS)', tuileDisque: 'Disque',
+    tuileTous: 'Disque (tous)', deSaLimite: ' % de la limite de ce serveur', tous: 'Tous les serveurs de la machine', auDela: ' au-delà de leur limite'
   } : {
     go: ' GB', machine: 'Machine', serveur: 'Server', threads: ' threads · ', deRam: ' RAM', serveurs: 'Servers', enJeu: ' running',
     demarres: ' started out of ', joueurs: 'Players online', sur: 'of ', places: ' open slots', ram: 'Server RAM', des: ' % of ',
     cpu: 'Total CPU', somme: 'sum of started servers', disque: 'Server disk', limite: ' % of the ', restants: ' left',
-    instances: ' instances', maj: 'updated at ', pastille: 'Disk used by this instance (reported by ADS)', tuileDisque: 'Disk'
+    instances: ' instances', maj: 'updated at ', pastille: 'Disk used by this instance (reported by ADS)', tuileDisque: 'Disk',
+    tuileTous: 'Disk (all)', deSaLimite: ' % of this server limit', tous: 'All servers of the machine', auDela: ' over their limit'
   };
   function go(mb) { return (mb / 1024).toLocaleString(LOC, { maximumFractionDigits: mb >= 102400 ? 0 : 1 }) + T.go; }
   function metrique(i, nom) { var m = i && i.Metrics && i.Metrics[nom]; return m ? Number(m.RawValue) || 0 : 0; }
+  /** Limites publiées par disk-guard.py (facultatif) : relues au plus une fois par minute, null si le fichier n'existe pas. */
+  var CFG = { data: null, quand: 0 };
+  async function limites() {
+    if (Date.now() - CFG.quand < 60000) return CFG.data;
+    CFG.quand = Date.now();
+    try {
+      var rep = await fetch('/Scripts/TeamKitDisk.json?t=' + Math.floor(Date.now() / 60000), { cache: 'no-store', credentials: 'same-origin' });
+      CFG.data = rep.ok ? await rep.json() : null;
+    } catch (e) { CFG.data = null; }
+    return CFG.data;
+  }
+  function cle(x) { return String(x || '').trim().toLowerCase(); }
+  /** Limite d'une instance en Mo : par instance (ID, nom), sinon par jeu (ModuleDisplayName, Module), sinon par défaut. */
+  function limiteDe(i, cfg) {
+    if (!cfg || !i) return 0;
+    var a = cfg.instances_mb || {}, t = cfg.templates_mb || {};
+    return Number(a[cle(i.InstanceID)] || a[cle(i.InstanceName)] || a[cle(i.FriendlyName)] ||
+      t[cle(i.ModuleDisplayName)] || t[cle(i.Module)] || cfg.default_mb) || 0;
+  }
+  /** Couleur selon le remplissage : rien sous l'alerte, orange au-delà, rouge à 100 % ou au seuil de coupure. */
+  function teinte(pct, cfg) {
+    var alerte = Number(cfg && cfg.warn_pct) || 90, coupe = Number(cfg && cfg.stop_pct) || 100;
+    return pct >= Math.min(100, coupe) ? 'plein' : pct >= alerte ? 'chaud' : '';
+  }
+  var TEINTES = { '': '#f0b35a', chaud: '#f97316', plein: '#ef4444' };
   function maxi(i, nom) { var m = i && i.Metrics && i.Metrics[nom]; return m ? Number(m.MaxValue) || 0 : 0; }
 
   /** Le conteneur des groupes d'instances (div.ServerGroupContainer, relevé sur la page réelle le 3 oct. 2026) :
@@ -57,7 +86,8 @@
       '.DisplayMetric[data-metric="TkDiskUsage"]{--m:#f0b35a;--m-icone:\'hard_drive\'}' +
       '.DisplayMetric[data-metric="TkDiskUsage"] .DisplayMetricHeader::before{content:\'hard_drive\'}' +
       '#AMP_Core_MetricsDisplay:has(> #tk-disque-instance){grid-template-columns:none!important;grid-auto-flow:column!important;grid-auto-columns:minmax(0,1fr)!important}' +
-      '.tk-disque{display:inline-block;margin-top:2px;font-size:11px;line-height:1.4;padding:1px 7px;border-radius:999px;background:rgba(0,240,255,.10);color:var(--tk-texte-2,#c4c9d6);font-variant-numeric:tabular-nums;white-space:nowrap}';
+      '.tk-disque{display:inline-block;margin-top:2px;font-size:11px;line-height:1.4;padding:1px 7px;border-radius:999px;background:rgba(0,240,255,.10);color:var(--tk-texte-2,#c4c9d6);font-variant-numeric:tabular-nums;white-space:nowrap}' +
+      '.tk-disque.chaud{background:rgba(249,115,22,.18);color:#fdba74}.tk-disque.plein{background:rgba(239,68,68,.22);color:#fca5a5;font-weight:600}';
     document.head.appendChild(s);
   }
   function tuile(icone, lib, val, sous, pct) {
@@ -68,7 +98,7 @@
 
   /** Page État d'un serveur : une jauge « Disque » à côté de CPU / Mémoire / Joueurs.
    *  Cette page est un iframe de même origine (src = /instance/<InstanceID>) : on écrit dans son document. */
-  var TUILE = 'tk-disque-instance', disqueInstance = { id: null, mb: null, limite: 0, quand: 0 };
+  var TUILE = 'tk-disque-instance', disqueInstance = { id: null, mb: null, inst: null, limite: 0, occupe: 0, quand: 0 };
   function cadreServeur() {
     var fs = document.querySelectorAll('iframe');
     for (var k = 0; k < fs.length; k++) {
@@ -97,12 +127,13 @@
       var trouve = null;
       ((r && r.result) || r || []).forEach(function (x) { (x.AvailableInstances || []).forEach(function (i) { if (String(i.InstanceID || '').toLowerCase() === c.id) trouve = i; }); });
       disqueInstance.mb = trouve ? Number(trouve.DiskUsageMB) || 0 : null;
-      // limite du stockage : peut être refusée à un compte non admin, le rond reste alors vide
+      disqueInstance.inst = trouve;
+      // stockage (limite et occupé) : peut être refusé à un compte non admin, le rond reste alors vide
       try {
-        var lim = 0, rs = API.ADSModule.GetDatastoresAsync ? await API.ADSModule.GetDatastoresAsync() : null;
-        ((rs && rs.result) || rs || []).forEach(function (d) { lim += Number(d.SoftLimitMB) || 0; });
-        disqueInstance.limite = lim;
-      } catch (e) { disqueInstance.limite = 0; }
+        var lim = 0, occ = 0, rs = API.ADSModule.GetDatastoresAsync ? await API.ADSModule.GetDatastoresAsync() : null;
+        ((rs && rs.result) || rs || []).forEach(function (d) { lim += Number(d.SoftLimitMB) || 0; occ += Number(d.CurrentUsageMB) || 0; });
+        disqueInstance.limite = lim; disqueInstance.occupe = occ;
+      } catch (e) { disqueInstance.limite = 0; disqueInstance.occupe = 0; }
     }
     if (disqueInstance.mb == null) { if (t) t.remove(); return; }
     styleCadre(doc);
@@ -118,15 +149,25 @@
     }
     var h = t.querySelector('.DisplayMetricHeader');
     var txt = h ? [].filter.call(h.children, function (x) { return x.tagName === 'DIV' && !x.classList.contains('circleChart'); }) : [];
-    if (txt[0]) txt[0].textContent = T.tuileDisque;
-    var lim = disqueInstance.limite, part = lim ? Math.max(0, Math.min(1, disqueInstance.mb / lim)) : 0;
-    if (txt[1]) txt[1].textContent = lim ? go(disqueInstance.mb).replace(T.go, '') + ' / ' + go(lim) : go(disqueInstance.mb);
+    // ce qu'on compare à quoi, selon le mode choisi dans disk-limits.json (sans fichier : serveur / stockage)
+    var cfg = await limites(), mode = (cfg && cfg.display) || 'instance-datastore';
+    var num = disqueInstance.mb, den = disqueInstance.limite, lib = T.tuileDisque, titre = T.pastille, seuils = null;
+    var propre = limiteDe(disqueInstance.inst, cfg);
+    if (mode === 'instance-limit' && propre) { den = propre; seuils = cfg; titre += ' · ' + '%P' + T.deSaLimite + ' (' + go(propre) + ')'; }
+    else if (mode === 'all-datastore' && disqueInstance.occupe) { num = disqueInstance.occupe; lib = T.tuileTous; titre = T.tous; }
+    if (den && titre.indexOf('%P') < 0) titre += ' · %P' + T.limite + go(den);
+    var pct = den ? num / den * 100 : 0, part = Math.max(0, Math.min(1, pct / 100));
+    if (txt[0]) txt[0].textContent = lib;
+    if (txt[1]) txt[1].textContent = den ? go(num).replace(T.go, '') + ' / ' + go(den) : go(num);
+    var tn = den ? teinte(pct, seuils) : '';
+    t.style.setProperty('--m', TEINTES[tn]);
     var v = t.querySelector('circle.value');
     if (v) {
       var longueur = parseFloat(doc.defaultView.getComputedStyle(v).strokeDasharray) || 402;
       v.style.strokeDashoffset = (longueur * (1 - part)).toFixed(1) + 'px';
+      v.style.stroke = tn ? TEINTES[tn] : '';
     }
-    t.title = T.pastille + (lim ? ' · ' + Math.round(part * 100) + T.limite + go(lim) : '');
+    t.title = titre.replace('%P', Math.round(pct));
   }
 
   async function rafraichir() {
@@ -178,9 +219,14 @@
           });
         }
       } catch (e) { /* champs absents : on garde la somme des instances */ }
+      var cfg = await limites(), pleins = 0;
+      cibles.forEach(function (c) { (c.AvailableInstances || []).forEach(function (i) {
+        var l = limiteDe(i, cfg); if (l && (Number(i.DiskUsageMB) || 0) >= l) pleins++;
+      }); });
       var occupe = ds.usage || disque;
       var pctDisque = ds.limite ? Math.round(occupe / ds.limite * 100) : (ds.libre != null ? Math.round(occupe / (occupe + ds.libre) * 100) : null);
       var sousDisque = ds.limite ? (pctDisque + T.limite + go(ds.limite) + (FR ? '' : ' limit') + ' · ' + go(Math.max(0, ds.limite - occupe)) + T.restants) : total + T.instances;
+      if (pleins) sousDisque = '⚠️ ' + pleins + T.auDela + ' · ' + sousDisque;
       var pctRam = ramMachine ? Math.round(ram / ramMachine * 100) : null;
       var html =
         tuile('dns', T.machine, modele || T.serveur, threads ? threads + T.threads + go(ramMachine) + T.deRam : '', null) +
@@ -204,8 +250,10 @@
         var mb = Number(i.DiskUsageMB) || 0;
         var p = carte.querySelector('.tk-disque');
         if (!p) { p = document.createElement('span'); p.className = 'tk-disque'; h.parentElement.appendChild(p); }
-        p.textContent = '💾 ' + go(mb);
-        p.title = T.pastille;
+        var l = limiteDe(i, cfg), pc = l ? mb / l * 100 : 0;
+        p.textContent = '💾 ' + (l ? go(mb).replace(T.go, '') + ' / ' + go(l) : go(mb));
+        p.className = 'tk-disque' + (l && teinte(pc, cfg) ? ' ' + teinte(pc, cfg) : '');
+        p.title = T.pastille + (l ? ' · ' + Math.round(pc) + T.deSaLimite : '');
       });
     } catch (e) { /* jamais d'erreur visible dans ADS */ }
   }

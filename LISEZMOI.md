@@ -236,6 +236,10 @@ de `WebRoot/Themes/` : en garder une copie et les remettre si le thème repasse 
 
 Dans la console : `localStorage.tkStatsOff = '1'` (et `localStorage.removeItem('tkStatsOff')` pour la remettre).
 
+### Barre collée en haut
+
+La barre reste en haut quand on fait défiler la liste des instances. Pour qu'elle défile avec la page dans un navigateur : `localStorage.tkStatsFixe = '0'` (et `localStorage.removeItem('tkStatsFixe')` pour la recoller).
+
 ### Dépannage
 
 | Ce qu'on voit | Ce qu'on vérifie |

@@ -90,11 +90,16 @@
     return null;
   }
 
+  function fixe() { try { return localStorage.getItem('tkStatsFixe') !== '0'; } catch (e) { return true; } }
   function style() {
     if (document.getElementById(ID + '-css')) return;
     var s = document.createElement('style'); s.id = ID + '-css';
     s.textContent =
       '#' + ID + '{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:0 0 16px;font-family:Inter,system-ui,sans-serif}' +
+      // Barre « collante » : elle reste en haut quand on fait défiler la liste des instances.
+      // top:-24px comme les en-têtes d'AMP : la page défile dans .bodyTab, qui a 24 px de marge intérieure.
+      // localStorage.tkStatsFixe = '0' la décroche, dans ce navigateur seulement.
+      (fixe() ? '#' + ID + '{position:sticky;top:-24px;z-index:30;padding:14px 0 10px;margin-top:-14px;background:var(--tk-fond,rgba(11,14,20,.92));-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:0 8px 18px -12px rgba(0,0,0,.7)}' : '') +
       '#' + ID + ' .tks{background:var(--tk-carte,#161a24);border:1px solid var(--tk-bord,#262b38);border-radius:14px;padding:12px 14px;min-width:0}' +
       '#' + ID + ' .tks-l{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--tk-texte-3,#8b92a5);display:flex;gap:6px;align-items:center}' +
       '#' + ID + ' .tks-l .mat-icon{font-size:16px}' +

@@ -252,6 +252,7 @@ and the cron line if you added one.
 ### Customise
 
 - Hide it in one browser only: run `localStorage.tkStatsOff = '1'` in the console (`localStorage.removeItem('tkStatsOff')` to bring it back).
+- The bar stays pinned at the top while you scroll the instance list. To let it scroll away in one browser: `localStorage.tkStatsFixe = '0'` (`localStorage.removeItem('tkStatsFixe')` to pin it again).
 - Who sees the bar: change the permission in `estAdmin()`.
 - Refresh rate: `15000` (ms) in `rafraichir()`.
 - Placement: the bar is inserted before the first visible `div.ServerGroupContainer`; badges go under the `h3` of each `div.ServerEntry`.

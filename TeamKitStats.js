@@ -49,11 +49,19 @@
   }
   function cle(x) { return String(x || '').trim().toLowerCase(); }
   /** Limite d'une instance en Mo : par instance (ID, nom), sinon par jeu (ModuleDisplayName, Module), sinon par défaut. */
+  /** Empreinte FNV-1a 32 bits, la même que disk-guard.py : le fichier public (v2) ne liste que des empreintes,
+   *  jamais d'identifiant, de nom de serveur ni de nom de jeu. Marche aussi en http (pas besoin de crypto.subtle). */
+  function empreinte(x) {
+    var s = cle(x), h = 0x811c9dc5;
+    for (var k = 0; k < s.length; k++) { h ^= s.charCodeAt(k); h = Math.imul(h, 0x01000193) >>> 0; }
+    return ('0000000' + h.toString(16)).slice(-8);
+  }
   function limiteDe(i, cfg) {
     if (!cfg || !i) return 0;
     var a = cfg.instances_mb || {}, t = cfg.templates_mb || {};
-    return Number(a[cle(i.InstanceID)] || a[cle(i.InstanceName)] || a[cle(i.FriendlyName)] ||
-      t[cle(i.ModuleDisplayName)] || t[cle(i.Module)] || cfg.default_mb) || 0;
+    var c = cfg.hash === 'fnv1a32' ? empreinte : cle;   // v1 : clés en clair (ancienne version du gardien)
+    return Number(a[c(i.InstanceID)] || a[c(i.InstanceName)] || a[c(i.FriendlyName)] ||
+      t[c(i.ModuleDisplayName)] || t[c(i.Module)] || cfg.default_mb) || 0;
   }
   /** Couleur selon le remplissage : rien sous l'alerte, orange au-delà, rouge à 100 % ou au seuil de coupure. */
   function teinte(pct, cfg) {

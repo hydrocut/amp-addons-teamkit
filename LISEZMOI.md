@@ -286,9 +286,9 @@ echo '*/5 * * * * root /usr/bin/python3 /opt/amp-addons-teamkit/disk-guard.py >>
 ```
 
 Il écrit `WebRoot/Scripts/TeamKitDisk.json` dans l'instance ADS (seulement si quelque chose a changé) : mode
-d'affichage, seuils et limites par identifiant de serveur ou nom de jeu. **Ce fichier se lit sans être connecté** :
-il ne contient jamais le compte, le mot de passe ni le webhook. Renseigner `amp` pour que les noms de serveurs soient
-publiés sous forme d'identifiants.
+d'affichage, seuils et limites. **Ce fichier se lit sans être connecté** : il ne contient donc que des **empreintes**
+(FNV-1a, recalculées de la même façon par la page) — aucun identifiant de serveur, nom de serveur ni nom de jeu, et
+jamais le compte, le mot de passe ni le webhook.
 
 Pour le compte AMP, créer dans ADS un utilisateur dédié qui a accès aux instances (et seulement ça), et mettre son
 mot de passe seul dans le `password_file` (`chmod 600`).

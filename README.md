@@ -285,8 +285,8 @@ echo '*/5 * * * * root /usr/bin/python3 /opt/amp-addons-teamkit/disk-guard.py >>
 ```
 
 It writes `WebRoot/Scripts/TeamKitDisk.json` in the ADS instance (only when something changed): display mode,
-thresholds and limits by instance ID or game name. **This file is readable without logging in**: it never holds the
-account, the password or the webhook. Configure `amp` so that instance names are published as IDs.
+thresholds and limits. **This file is readable without logging in**, so it only holds **fingerprints** (FNV-1a, computed
+the same way by the page): no instance ID, server name or game name, and never the account, the password or the webhook.
 
 For the AMP account, create a dedicated user in ADS with access to the instances (and only that); put its password
 alone in the `password_file` (`chmod 600`).

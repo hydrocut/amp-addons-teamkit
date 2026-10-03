@@ -4,8 +4,9 @@
 Reads disk-limits.json and does two things, every time it runs (cron or systemd timer, every 5 minutes):
 
 1. Publishes the limits for the stats script: WebRoot/Scripts/TeamKitDisk.json of the ADS instance
-   (display mode, thresholds, limit per instance ID, per game, default). The public file never contains
-   the AMP account, the password or the webhook. Written only when something changed.
+   (display mode, thresholds, limits per instance and per game, default). The public file holds fingerprints only:
+   no instance ID, name or game name, and never the AMP account, the password or the webhook. Written only when
+   something changed.
 2. Optionally (enforce: true) stops the GAME of every instance above its limit. It calls Core/Stop on the
    instance: the AMP instance itself keeps running, so its File Manager and SFTP stay open to clean up.
    An instance restarted while still above the limit is stopped again on the next run.
@@ -46,6 +47,17 @@ def debug(msg):
 
 def key(s):
     return str(s or '').strip().lower()
+
+
+def fnv(s):
+    """FNV-1a 32 bits over the UTF-16 code units, exactly like the browser side (TeamKitStats.js): the public file
+    lists fingerprints, never instance IDs, names or game names. Not a security hash, just no readable data."""
+    h = 0x811c9dc5
+    b = key(s).encode('utf-16-le')
+    for i in range(0, len(b), 2):
+        h ^= b[i] | (b[i + 1] << 8)
+        h = (h * 0x01000193) & 0xffffffff
+    return '%08x' % h
 
 
 def gb_to_mb(v):
@@ -175,7 +187,8 @@ def build_public(cfg, imported, instances):
     warn = cfg.get('warn_pct', imported.get('warn_pct', 90))
     stop = cfg.get('stop_pct', imported.get('stop_pct', 100))
     return {
-        'v': 1,
+        'v': 2,
+        'hash': 'fnv1a32',
         'display': cfg.get('display', 'instance-limit'),
         'warn_pct': int(warn),
         'stop_pct': int(stop),
@@ -197,7 +210,16 @@ def limit_of(inst, public):
     return public['default_mb']
 
 
+def hashed(public):
+    out = dict(public)
+    out['instances_mb'] = {fnv(k): v for k, v in public['instances_mb'].items()}
+    out['instances_mb'].update(out.pop('_keep_mb', None) or {})
+    out['templates_mb'] = {fnv(k): v for k, v in public['templates_mb'].items()}
+    return out
+
+
 def write_public(path, public, dry):
+    public = hashed(public)
     old = None
     try:
         with open(path, encoding='utf-8') as f:
@@ -299,8 +321,10 @@ def main():
         try:
             with open(public_path, encoding='utf-8') as f:
                 prev = json.load(f)
-            for k, v in (prev.get('instances_mb') or {}).items():
-                public['instances_mb'].setdefault(k, v)
+            if prev.get('hash') == 'fnv1a32':
+                keep = prev.get('instances_mb') or {}
+                mine = {fnv(k) for k in public['instances_mb']}
+                public['_keep_mb'] = {k: v for k, v in keep.items() if k not in mine}
         except Exception:
             pass
     write_public(public_path, public, dry)

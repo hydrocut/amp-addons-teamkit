@@ -116,12 +116,13 @@ fetch_files() {
 
 # what is installed now
 state() {
-  S_THEMES=n; S_STATS=n; S_LANG=n; S_REPAIR=n; S_GUARD=n
+  S_THEMES=n; S_STATS=n; S_LANG=n; S_REPAIR=n; S_GUARD=n; S_SUPPORT=n
   { [ -f "$W/Themes/TeamKit.css" ] || [ -f "$W/Themes/TeamKit-HUD.css" ] || [ -d "$W/Themes/AMPThemes/TeamKit" ]; } && S_THEMES=y
   grep -q "/Scripts/TeamKitStats.js" "$W/AMP.html" && S_STATS=y
   grep -q "/Scripts/TeamKitLang.js" "$W/AMP.html" && S_LANG=y
   [ -f "$CRON_DIR/amp-addons-teamkit" ] && S_REPAIR=y
   [ -f "$CONF/disk-limits.json" ] && S_GUARD=y
+  grep -q "/Scripts/TeamKitSupport.js" "$W/AMP.html" && S_SUPPORT=y
   return 0
 }
 show_state() {
@@ -132,6 +133,7 @@ show_state() {
   line "$S_LANG"   "AMP en français (bouton FR | EN)" "AMP in French (FR | EN switch)"
   line "$S_REPAIR" "Remise en place après les mises à jour d'AMP (cron)" "Repair after AMP updates (cron)"
   line "$S_GUARD"  "Limites disque et gardien" "Disk limits and guard"
+  line "$S_SUPPORT" "Boutons de support d'AMP vers ton support" "AMP's support buttons sent to your support"
 }
 
 choose_components() {
@@ -143,6 +145,10 @@ choose_components() {
   if ask_yn "Les remettre tout seul après chaque mise à jour d'AMP (conseillé) ?" "Put them back by itself after every AMP update (recommended)?" y; then C_REPAIR=y; else C_REPAIR=n; fi
   dg=n; [ "$S_GUARD" = y ] && dg=y
   if ask_yn "Limites disque par serveur (et gardien) ?" "Disk limits per server (and guard)?" "$dg"; then C_GUARD=y; else C_GUARD=n; fi
+  ds=n; [ "$S_SUPPORT" = y ] && ds=y
+  say "  Par défaut, « Créer un ticket » d'AMP publie un sujet PUBLIC sur le forum de CubeCoders, et ses boutons d'aide mènent chez eux." \
+      "  By default, AMP's « Open a support ticket » posts a PUBLIC topic on the CubeCoders forum, and its help buttons lead to them."
+  if ask_yn "Envoyer les tickets et les boutons d'aide d'AMP vers TON support ?" "Send AMP's tickets and help buttons to YOUR support?" "$ds"; then C_SUPPORT=y; else C_SUPPORT=n; fi
 }
 
 apply_components() {
@@ -152,14 +158,17 @@ apply_components() {
   [ "$C_THEMES" = y ] && echo themes >> "$CONF/components"
   [ "$C_STATS" = y ] && echo stats >> "$CONF/components"
   [ "$C_LANG" = y ] && echo lang >> "$CONF/components"
-  AMPDATA="$AMPDATA" AMP_ADDONS_COMPONENTS="$CONF/components" sh "$DIR/install-stats.sh" "$ADS" "$DIR" | sed 's/^/  /'
+  if [ "$C_SUPPORT" = y ]; then support_setup && echo support >> "$CONF/components" || C_SUPPORT=n; fi
+  [ "$C_SUPPORT" = keep ] && echo support >> "$CONF/components"
+  AMPDATA="$AMPDATA" AMP_ADDONS_CONF="$CONF" AMP_ADDONS_COMPONENTS="$CONF/components" sh "$DIR/install-stats.sh" "$ADS" "$DIR" | sed 's/^/  /'
   # what was installed and is no longer wanted
   [ "$S_STATS" = y ] && [ "$C_STATS" = n ] && remove_script TeamKitStats.js && rm -f "$W/Scripts/TeamKitDisk.json"
   [ "$S_LANG" = y ] && [ "$C_LANG" = n ] && remove_script TeamKitLang.js && rm -f "$W/Locale/fr.json"
   [ "$S_THEMES" = y ] && [ "$C_THEMES" = n ] && remove_themes
+  [ "$S_SUPPORT" = y ] && [ "$C_SUPPORT" = n ] && remove_script TeamKitSupport.js && rm -f "$W/Scripts/TeamKitSupport.json"
   if [ "$C_REPAIR" = y ]; then
     printf '%s\n' "# AMP add-ons by TeamKit: put them back after AMP updates (setup.sh)" \
-      "*/30 * * * * root AMPDATA=$AMPDATA AMP_ADDONS_COMPONENTS=$CONF/components sh $DIR/install-stats.sh $ADS $DIR >/dev/null 2>&1" > "$CRON_DIR/amp-addons-teamkit"
+      "*/30 * * * * root AMPDATA=$AMPDATA AMP_ADDONS_CONF=$CONF AMP_ADDONS_COMPONENTS=$CONF/components sh $DIR/install-stats.sh $ADS $DIR >/dev/null 2>&1" > "$CRON_DIR/amp-addons-teamkit"
     ok "Remise en place automatique : toutes les 30 minutes" "Automatic repair: every 30 minutes"
   elif [ -f "$CRON_DIR/amp-addons-teamkit" ]; then
     rm -f "$CRON_DIR/amp-addons-teamkit"; ok "Remise en place automatique retirée" "Automatic repair removed"
@@ -168,7 +177,45 @@ apply_components() {
   return 0
 }
 
-remove_script() {   # $1 = TeamKitStats.js | TeamKitLang.js
+# ── your own support (TeamKitSupport.js) ─────────────────────────────────────
+json_str() { printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g'; }
+support_get() { [ -f "$CONF/support.json" ] && sed -n "s/^ *\"$1\": *\"\(.*\)\",\{0,1\}$/\1/p" "$CONF/support.json" | sed 's/\\"/"/g; s/\\\\/\\/g' | head -n 1; }
+ask_url() {   # ask_url "fr" "en" default -> $REPLY (an https://, http:// or mailto: address, or empty)
+  while :; do
+    ask_value "$1" "$2" "$3"
+    [ "$REPLY" = "-" ] && REPLY=""
+    case "$REPLY" in ""|https://*|http://*|mailto:*) return 0 ;; esac
+    warn "Il faut une adresse en https://, http:// ou mailto: (ou « - » pour aucune)" "An https://, http:// or mailto: address is needed (or « - » for none)"
+  done
+}
+support_setup() {
+  title "Ton support" "Your support"
+  say "Laisse vide (ou tape « - ») ce que tu veux laisser à AMP. Ces adresses sont lisibles par quiconque ouvre AMP :" \
+      "Leave empty (or type « - ») what you want to leave to AMP. These addresses can be read by anyone who opens AMP:"
+  say "n'y mets jamais de mot de passe ni de webhook." "never put a password or a webhook in them."
+  say "Tickets : ton formulaire, ton site de tickets ou un mailto:. Ce que la personne a écrit peut y être ajouté avec" \
+      "Tickets: your form, your ticket site or a mailto:. What the person typed can be added with"
+  say "  {summary} {details} {category} {server} {instance} {version}" "  {summary} {details} {category} {server} {instance} {version}"
+  say "  ex. https://example.com/support?subject={summary}&message={details}" "  e.g. https://example.com/support?subject={summary}&message={details}"
+  say "  ex. mailto:support@example.com?subject={summary}&body={details}" "  e.g. mailto:support@example.com?subject={summary}&body={details}"
+  ask_url "Adresse des tickets" "Ticket address" "$(support_get tickets)"; P_T="$REPLY"
+  ask_url "Invitation Discord (bouton « Rejoindre le serveur Discord »)" "Discord invite (« Join Discord Server » button)" "$(support_get discord)"; P_D="$REPLY"
+  ask_url "Aide ou documentation (bouton « Voir le forum d'aide »)" "Help or documentation (« Visit support board » button)" "$(support_get docs)"; P_H="$REPLY"
+  ask_value "Phrase à la place de « Toutes les réponses doivent être en anglais » (vide = automatique)" \
+            "Sentence replacing « All responses must be in English » (empty = automatic)" "$(support_get hint)"; P_X="$REPLY"
+  if [ -z "$P_T$P_D$P_H" ]; then
+    warn "Aucune adresse : AMP garde ses boutons de support." "No address: AMP keeps its own support buttons."
+    return 1
+  fi
+  install -d -m 755 "$CONF"
+  printf '{\n  "tickets": "%s",\n  "discord": "%s",\n  "docs": "%s",\n  "hint": "%s"\n}\n' \
+    "$(json_str "$P_T")" "$(json_str "$P_D")" "$(json_str "$P_H")" "$(json_str "$P_X")" > "$CONF/support.json"
+  chmod 644 "$CONF/support.json"
+  ok "Réglages écrits : $CONF/support.json" "Settings written: $CONF/support.json"
+  return 0
+}
+
+remove_script() {   # $1 = TeamKitStats.js | TeamKitLang.js | TeamKitSupport.js
   cp -p "$W/AMP.html" "$W/AMP.html.before-uninstall-$(date +%Y%m%d-%H%M%S)"
   sed -i "\#/Scripts/$1#d" "$W/AMP.html"
   rm -f "$W/Scripts/$1"
@@ -252,6 +299,8 @@ uninstall_all() {
   ask_yn "Tout retirer (thèmes posés par l'installeur, scripts, traduction, cron, gardien) ?" "Remove everything (themes placed by the installer, scripts, translation, cron, guard)?" n || return 0
   [ "$S_STATS" = y ] && remove_script TeamKitStats.js
   [ "$S_LANG" = y ] && remove_script TeamKitLang.js
+  [ "$S_SUPPORT" = y ] && remove_script TeamKitSupport.js
+  rm -f "$W/Scripts/TeamKitSupport.json"
   rm -f "$W/Scripts/TeamKitDisk.json" "$W/Locale/fr.json" "$CRON_DIR/amp-addons-teamkit"
   remove_themes
   [ "$S_GUARD" = y ] && guard_remove
@@ -287,7 +336,9 @@ main() {
   ask_value "Choix" "Choice" 1
   case "$REPLY" in
     2) fetch_files
-       C_THEMES=$S_THEMES; C_STATS=$S_STATS; C_LANG=$S_LANG; C_REPAIR=$S_REPAIR; C_GUARD=n
+       C_THEMES=$S_THEMES; C_STATS=$S_STATS; C_LANG=$S_LANG; C_REPAIR=$S_REPAIR; C_GUARD=n; C_SUPPORT=n
+       # keep the support redirect as it is (settings untouched), only the script is refreshed
+       if [ "$S_SUPPORT" = y ] && [ -f "$CONF/support.json" ]; then C_SUPPORT=keep; fi
        if [ "$S_GUARD" = y ]; then
          python3 "$DIR/disk-guard.py" --config "$CONF/disk-limits.json" >/dev/null 2>&1; ok "Gardien relancé avec la nouvelle version" "Guard re-run with the new version"
        fi

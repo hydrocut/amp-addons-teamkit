@@ -15,6 +15,7 @@ serveurs gratuits. Une commande pour tout installer sous Linux, aucun fichier d'
 | **Barre de stats** | des tuiles au-dessus de la liste des instances (machine, serveurs en marche, joueurs, RAM, CPU, disque et sa limite), une pastille `💾 X Go` sur chaque carte et une quatrième jauge **Disque** sur la page État de chaque serveur | un fichier JavaScript + une ligne dans `AMP.html` |
 | **Limites disque et gardien** | une limite par jeu ou par serveur dans un fichier de config : jauges et pastilles en `occupé / limite`, et (si on veut) le jeu coupé quand le disque est plein, gestionnaire de fichiers et SFTP restant ouverts | `disk-guard.py`, toutes les 5 minutes (facultatif) |
 | **AMP en français** | le panel en français pour les navigateurs en français, avec un bouton FR / EN ; réglages des jeux compris | `TeamKitLang.js` + `fr.json` |
+| **Ton propre support** | le bouton de ticket et les boutons d'aide d'AMP mènent à TON support (site de tickets, formulaire, e-mail, Discord) au lieu du forum de CubeCoders | `TeamKitSupport.js` + un petit fichier de réglages (facultatif) |
 
 ## Captures
 
@@ -68,7 +69,8 @@ puis te laisse choisir, par des questions oui / non :
 
 - les thèmes, la barre de stats et la jauge Disque, AMP en français ;
 - la remise en place automatique après les mises à jour d'AMP (cron, toutes les 30 minutes) ;
-- les limites disque et le gardien, réglés par des questions (affichage, limite par défaut, seuils, couper le jeu ou non).
+- les limites disque et le gardien, réglés par des questions (affichage, limite par défaut, seuils, couper le jeu ou non) ;
+- ton propre support : où doivent mener les tickets, le bouton Discord et le bouton d'aide d'AMP (chacun peut rester à AMP).
 
 **Relance-le quand tu veux** : *Mettre à jour seulement ce qui est installé* pour la nouvelle version, *Installer ou mettre
 à jour* pour ajouter les nouvelles fonctions, ou *Tout désinstaller*. Rien n'est jamais redémarré. Les fois suivantes, il
@@ -349,6 +351,44 @@ laisse **éteint** (il vide `AMPLocale`) : ce que traduit le moteur d'AMP ne se 
 
 Les variables des déclencheurs du planificateur (`Time`, `UserID`, `PreviousState`…) restent volontairement en anglais : ce
 sont des noms à recopier dans les tâches.
+
+## 5. Ton propre support (facultatif)
+
+D'origine, **Créer un ticket** d'AMP publie un sujet **public** sur le forum de CubeCoders, avec les infos techniques du
+serveur, et ses boutons **Rejoindre le serveur Discord** et **Voir le forum d'aide** mènent chez CubeCoders. C'est très
+bien pour tes propres serveurs. Si tu héberges des serveurs **pour d'autres**, c'est sans doute **toi** qu'ils doivent
+joindre.
+
+`TeamKitSupport.js` envoie chacun de ces boutons à l'adresse que tu choisis, et laisse les autres à AMP :
+
+| Bouton d'AMP | Réglage | Exemple |
+|---|---|---|
+| Créer un ticket (le bouton **et** le formulaire complet de l'onglet Support) | `tickets` | `https://example.com/support?subject={summary}&message={details}` ou `mailto:support@example.com?subject={summary}&body={details}` |
+| Rejoindre le serveur Discord | `discord` | `https://discord.gg/toninvitation` |
+| Voir le forum d'aide | `docs` | `https://example.com/aide` |
+
+L'installeur demande les trois adresses (laisse vide pour garder le comportement d'AMP) et écrit
+`/etc/amp-addons-teamkit/support.json`, recopié à côté du script en `WebRoot/Scripts/TeamKitSupport.json` :
+
+```json
+{
+  "tickets": "https://example.com/support?subject={summary}&message={details}",
+  "discord": "https://discord.gg/toninvitation",
+  "docs": "",
+  "hint": ""
+}
+```
+
+- **Variables** dans `tickets`, encodées pour l'adresse : `{summary}` `{details}` `{category}` `{server}` `{instance}`
+  `{version}`. Quand quelqu'un remplit le formulaire complet d'AMP (catégorie, résumé, étapes, description), ce qu'il a
+  écrit part dans `{summary}` et `{details}` : rien n'est perdu. Depuis le simple bouton, elles sont vides.
+- **`hint`** remplace « Toutes les réponses doivent être en anglais. », qui ne vaut que pour CubeCoders. Vide = une
+  phrase automatique, en français ou en anglais.
+- **Fichier public** : quiconque ouvre AMP peut le lire. N'y mets que des adresses publiques, jamais de mot de passe,
+  de jeton ni de webhook.
+- Le script n'envoie rien lui-même : il ouvre seulement l'adresse dans un nouvel onglet.
+- Gardé après les mises à jour d'AMP par la remise en place automatique, comme les autres ajouts. Pour changer les
+  adresses : relance `setup.sh` (les valeurs actuelles sont proposées par défaut).
 
 ## Licence
 

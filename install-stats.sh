@@ -8,6 +8,7 @@
 #   TeamKitStats.js  stats bar, disk badges and Disk gauge
 #   TeamKitLang.js   French for AMP (needs fr.json)
 #   fr.json          the dictionary, copied to WebRoot/Locale/fr.json
+#   TeamKitSupport.js  AMP's support buttons sent to YOUR support (needs /etc/amp-addons-teamkit/support.json)
 # Easiest: run setup.sh instead (questions, language, update, uninstall). This script is what setup.sh and cron call.
 # Safe to run again and again (by hand or from cron): it only writes when something is missing or changed.
 #   - file missing or different -> copied; for a script, its ?v= is bumped (browser cache)
@@ -58,6 +59,16 @@ want() { [ -f "$COMPONENTS" ] || return 0; grep -qx "$1" "$COMPONENTS"; }
 
 if want stats; then script TeamKitStats.js; fi
 if want lang; then script TeamKitLang.js; fi
+# Your own support (setup.sh writes the settings): the script + its settings, both put back after an AMP update
+CONF_DIR="${AMP_ADDONS_CONF:-/etc/amp-addons-teamkit}"
+if want support && [ -f "$CONF_DIR/support.json" ]; then
+  script TeamKitSupport.js
+  if ! cmp -s "$CONF_DIR/support.json" "$W/Scripts/TeamKitSupport.json"; then
+    install -o "$U" -g "$G" -m 644 "$CONF_DIR/support.json" "$W/Scripts/TeamKitSupport.json"
+    CHANGED=1
+    echo "Copied the support settings (Scripts/TeamKitSupport.json)"
+  fi
+fi
 
 want themes && for T in TeamKit.css TeamKit-HUD.css; do   # themes: then pick one in ADS > Configuration
   N="${T%.css}"
@@ -92,6 +103,6 @@ else
   echo "Already installed."
 fi
 # Uninstall: restore AMP.html from the newest AMP.html.before-stats-* backup, or delete the <script> lines,
-# then remove WebRoot/Scripts/TeamKitStats.js, TeamKitLang.js, TeamKitDisk.json, WebRoot/Locale/fr.json
+# then remove WebRoot/Scripts/TeamKitStats.js, TeamKitLang.js, TeamKitSupport.js(on), TeamKitDisk.json, WebRoot/Locale/fr.json
 # and WebRoot/Themes/TeamKit*.css (pick another theme in ADS first).
 # Remove the cron lines too if you added them.

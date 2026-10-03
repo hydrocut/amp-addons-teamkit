@@ -15,6 +15,7 @@ on Linux, no AMP file is replaced.
 | **Stats bar** | tiles above the instance list: machine, servers running, players online, RAM, CPU, datastore usage and limit; a `💾 X GB` badge on each instance card; a fourth **Disk** gauge on the Status page of every instance | one JavaScript file + one line in `AMP.html` |
 | **Disk limits and guard** | a limit per game or per instance in one config file: gauges and badges show `used / limit`, and (optionally) the game is stopped when the disk is full, File Manager and SFTP staying open | `disk-guard.py`, every 5 minutes (optional) |
 | **AMP in French** | the panel in French for French browsers, with an FR / EN switch; game settings included | `TeamKitLang.js` + `fr.json` |
+| **Your own support** | AMP's ticket button and help buttons lead to YOUR support (ticket site, form, e-mail, Discord) instead of the CubeCoders forum | `TeamKitSupport.js` + a small settings file (optional) |
 
 ## Screenshots
 
@@ -65,7 +66,8 @@ then lets you pick, with yes / no questions:
 
 - the themes, the stats bar and Disk gauge, AMP in French;
 - the automatic repair after AMP updates (cron, every 30 minutes);
-- the disk limits and guard, set up by questions (display mode, default limit, thresholds, stop the game or not).
+- the disk limits and guard, set up by questions (display mode, default limit, thresholds, stop the game or not);
+- your own support: where AMP's tickets, Discord button and help button should lead (each one can be left to AMP).
 
 **Run it again any time**: choose *Only update what is installed* to get the new version, *Install or update* to add
 the new features, or *Uninstall everything*. Nothing is ever restarted. Next times, it is already on the machine:
@@ -344,6 +346,43 @@ The dictionary uses AMP's own format (`"Strings": { "English text": "French text
 
 Trigger variables in the scheduler (`Time`, `UserID`, `PreviousState`…) are left in English on purpose: they are names you
 type in tasks.
+
+## 5. Your own support (optional)
+
+Out of the box, AMP's **Open a support ticket** posts a **public** topic on the CubeCoders forum, with the server's
+technical details, and its **Join Discord Server** and **Visit support board** buttons lead to CubeCoders. That is right
+for your own servers. If you host servers **for other people**, they should probably reach **you** instead.
+
+`TeamKitSupport.js` sends each of these to the address you choose, and leaves the others to AMP:
+
+| Button in AMP | Setting | Example |
+|---|---|---|
+| Open a support ticket (button **and** the full form of the Support tab) | `tickets` | `https://example.com/support?subject={summary}&message={details}` or `mailto:support@example.com?subject={summary}&body={details}` |
+| Join Discord Server | `discord` | `https://discord.gg/yourinvite` |
+| Visit support board | `docs` | `https://example.com/help` |
+
+The installer asks for the three addresses (leave one empty to keep AMP's behaviour) and writes
+`/etc/amp-addons-teamkit/support.json`, copied next to the script as `WebRoot/Scripts/TeamKitSupport.json`:
+
+```json
+{
+  "tickets": "https://example.com/support?subject={summary}&message={details}",
+  "discord": "https://discord.gg/yourinvite",
+  "docs": "",
+  "hint": ""
+}
+```
+
+- **Placeholders** in `tickets`, URL-encoded: `{summary}` `{details}` `{category}` `{server}` `{instance}` `{version}`.
+  When someone fills AMP's full ticket form (category, summary, steps, description), what they typed goes into
+  `{summary}` and `{details}`, so nothing is lost; from the simple button, they are empty.
+- **`hint`** replaces AMP's « All responses must be in English. », which is only true for CubeCoders. Empty = an
+  automatic sentence in English or French.
+- **Public file**: anyone who opens AMP can read it. Put only public addresses in it, never a password, a token or a
+  webhook.
+- Nothing is sent by the script itself: it only opens the address in a new tab.
+- Kept after AMP updates by the automatic repair, like the other add-ons. Change the addresses: run `setup.sh` again
+  (the current values are offered as defaults).
 
 ## Licence
 

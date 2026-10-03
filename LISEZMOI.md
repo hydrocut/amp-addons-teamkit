@@ -58,7 +58,7 @@ Il répond `Installed. Reload the ADS page (Ctrl+F5).` Si ton instance ADS ne s'
 
 **3. Dans le navigateur** : ouvre AMP, appuie sur **Ctrl+F5**. Pour le thème : ADS → **Configuration** → thème
 **TeamKit** ou **TeamKit-HUD** → enregistrer. Un navigateur réglé en français affiche maintenant AMP en français, avec un
-bouton **FR | EN** en bas à droite.
+bouton **FR | EN** à côté de la recherche.
 
 **4. Les garder après les mises à jour d'AMP** (conseillé) : une mise à jour d'AMP retire les ajouts, cette ligne les remet
 toute seule en moins de 30 minutes.
@@ -275,7 +275,7 @@ FiveM, Barotrauma, DDNet, Teeworlds, Luanti, BeamMP, SA-MP, RimWorld, Eco, Empyr
 Farming Simulator 25, Node.js, MySQL, MariaDB, PostgreSQL…).
 
 - Un navigateur réglé en français affiche le panel en français ; les autres restent en anglais.
-- Un petit bouton **FR | EN** en bas à droite permet de changer ; le choix est gardé dans ce navigateur (`localStorage.tkLang`).
+- Un petit bouton **FR | EN** dans la barre du haut, à côté de la recherche, permet de changer (en bas à droite sur la page de connexion) ; le choix est gardé dans ce navigateur (`localStorage.tkLang`).
 - Les pages des serveurs ouvertes depuis ADS sont traduites aussi.
 - Jamais traduits : la console, les noms de fichiers, l'éditeur de fichiers, les noms des joueurs, ce qu'on tape dans un champ.
 - Revenir à l'anglais recharge la page : rien ne reste à moitié traduit.

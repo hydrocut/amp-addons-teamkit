@@ -59,7 +59,7 @@ It answers `Installed. Reload the ADS page (Ctrl+F5).` If your ADS instance is n
 
 **3. In your browser**: open AMP, press **Ctrl+F5**. To use a theme: ADS → **Configuration** → theme
 **TeamKit** or **TeamKit-HUD** → save. A browser set to French now shows AMP in French, with an **FR | EN**
-switch at the bottom right.
+switch next to the search box.
 
 **4. Keep it after AMP updates** (recommended): an AMP update removes the add-ons, this puts them back within 30 minutes.
 
@@ -275,7 +275,7 @@ Teeworlds, Luanti, BeamMP, SA-MP, RimWorld, Eco, Empyrion, Euro Truck Simulator 
 MySQL, MariaDB, PostgreSQL…).
 
 - Browsers set to French get the panel in French; everyone else keeps English.
-- A small **FR | EN** switch at the bottom right changes it; the choice is kept in that browser (`localStorage.tkLang`).
+- A small **FR | EN** switch in the top bar, next to the search box, changes it (bottom right on the login page); the choice is kept in that browser (`localStorage.tkLang`).
 - Instance pages opened from ADS are translated too.
 - Never translated: the console, file names, the file editor, player names, anything typed in a field.
 - Going back to English reloads the page, so nothing stays half translated.

@@ -2,7 +2,7 @@
 
    AMP 2.8 ships a translation engine (Scripts/Locale.js reading /Locale/<iso>.json) but nothing in the interface
    turns it on. This add-on does: when /Locale/fr.json exists, the panel is shown in French for browsers set to
-   French, and a small "FR | EN" switch (bottom right) lets anyone change it; the choice is kept in the browser.
+   French, and a small "FR | EN" switch (top bar, next to the search box) lets anyone change it; the choice is kept in the browser.
 
    - Same dictionary format as AMP ("Strings": exact English text -> translation), so the same fr.json works with
      AMP's own engine if CubeCoders adds a language picker one day.
@@ -15,9 +15,9 @@
   'use strict';
   var CLE = 'tkLang', DICO_URL = '/Locale/fr.json';
   // zones jamais traduites : sorties du jeu, fichiers, saisies, noms choisis par les gens
-  var SAUTER = 'script,style,pre,code,textarea,input,[contenteditable="true"],' +
-    '#consoleArea,#consoleUsers,#fileManagerList,#editorFilename,.fmPathSegment,#backupsList tbody,.ServerEntry h3,.tk-lang,' +
+  var ZONES = '#consoleArea,#consoleUsers,#fileManagerList,#editorFilename,.fmPathSegment,#backupsList tbody,.ServerEntry h3,.tk-lang,' +
     '.scheduleTriggerVariable'; // variables d'un déclencheur (Time, UserID…) : des noms à recopier, jamais à traduire
+  var SAUTER = 'script,style,pre,code,textarea,input,[contenteditable="true"],' + ZONES;
   var dico = null, vus = typeof WeakSet === 'function' ? new WeakSet() : null;
 
   function langue() {
@@ -44,8 +44,9 @@
     var t = traduit(n.nodeValue);
     if (t != null && t !== n.nodeValue) n.nodeValue = t;
   }
+  // le texte d'exemple d'un champ (placeholder) se traduit, son contenu jamais : on ne saute ici que les zones
   function attributs(el) {
-    if (saute(el)) return;
+    try { if (el.closest && el.closest(ZONES)) return; } catch (e) { return; }
     ['placeholder', 'title', 'aria-label'].forEach(function (a) {
       var v = el.getAttribute && el.getAttribute(a);
       if (v) { var t = traduit(v); if (t != null && t !== v) el.setAttribute(a, t); }
@@ -101,7 +102,9 @@
       '#tk-lang:hover,#tk-lang:focus-within{opacity:1}' +
       '#tk-lang button{all:unset;cursor:pointer;padding:5px 9px;border-radius:999px;color:var(--tk-texte-3,#8b92a5);letter-spacing:.06em}' +
       '#tk-lang button[aria-pressed="true"]{background:rgba(0,240,255,.16);color:var(--tk-texte,#e3e6ee)}' +
-      '#tk-lang button:focus-visible{outline:2px solid #00f0ff;outline-offset:1px}';
+      '#tk-lang button:focus-visible{outline:2px solid #00f0ff;outline-offset:1px}' +
+      // dans la barre du haut d'AMP, juste avant la recherche : bien visible, ne cache rien
+      '#tk-lang.tk-lang-barre{position:static;align-self:center;margin:0 0 0 16px;opacity:1;flex:none}';
     document.head.appendChild(s);
     var b = document.createElement('div');
     b.id = 'tk-lang'; b.className = 'tk-lang'; b.setAttribute('role', 'group');
@@ -119,6 +122,16 @@
       b.appendChild(x);
     });
     document.body.appendChild(b);
+    placer();
+    setInterval(placer, 1500); // la barre du haut n'apparaît qu'une fois connecté
+  }
+  /** Dans la barre du haut d'AMP (avant la recherche) quand elle est affichée, sinon en bas à droite (page de connexion). */
+  function placer() {
+    var b = document.getElementById('tk-lang'); if (!b) return;
+    var barre = document.getElementById('topSearchBox');
+    var visible = !!(barre && barre.parentElement && barre.offsetParent);
+    if (visible && b.nextElementSibling !== barre) { b.classList.add('tk-lang-barre'); barre.parentElement.insertBefore(b, barre); }
+    else if (!visible && b.parentElement !== document.body) { b.classList.remove('tk-lang-barre'); document.body.appendChild(b); }
   }
 
   async function demarrer() {

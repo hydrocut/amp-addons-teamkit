@@ -35,7 +35,7 @@
   ],
   "Strings": {
     "\"public\" is default. Choose a custom release on [SteamDB](https://steamdb.info/app/530870/depots/).": "« public » par défaut. Choisissez une autre version sur [SteamDB](https://steamdb.info/app/530870/depots/).",
-    "(None)": "(Aucun)",
+    "(None)": "(Aucune)",
     "--Custom--": "--Personnalisé--",
     "--Please select--": "--Choisissez--",
     "0 - Original format": "0 - Format d'origine",

@@ -1,7 +1,11 @@
-# Les ajouts AMP de TeamKit
+# Ajouts pour AMP : thèmes, barre de stats, limites disque et AMP en français (CubeCoders)
 
-Des personnalisations non officielles pour [AMP de CubeCoders](https://cubecoders.com/AMP), faites et utilisées
-tous les jours sur les serveurs de [TeamKit](https://www.teamkit.fr). *English version: [README.md](README.md).*
+Des ajouts gratuits et non officiels pour le [panel de serveurs de jeux AMP de CubeCoders](https://cubecoders.com/AMP) :
+deux thèmes sombres (dont un avec une page État façon écran de jeu), une **barre de stats** de toute la machine, une jauge
+**Disque** avec des **limites par serveur** et un gardien disque facultatif, et **AMP en français** avec un bouton FR | EN.
+Faits et utilisés tous les jours sur les serveurs de [TeamKit](https://www.teamkit.fr), communauté de joueurs française aux
+serveurs gratuits. Une commande pour tout installer sous Linux, aucun fichier d'AMP remplacé.
+*English version: [README.md](README.md).*
 
 | Ajout | Ce qu'il fait | Comment il s'installe |
 |---|---|---|
@@ -189,7 +193,10 @@ Dans la console : `localStorage.tkStatsOff = '1'` (et `localStorage.removeItem('
 | Pastilles et jauge, mais pas de barre | La barre est réservée aux admins (`Core.UserManagement.ViewActiveSessions`). |
 | Pas de barre pour un admin | `typeof API` doit valoir `"object"` dans la console ; `localStorage.tkStatsOff` ne doit pas valoir `"1"`. |
 | Pas de jauge Disque sur une page État | Ouvrir le serveur depuis ADS, pas depuis son propre port. Attendre 15 s (un rafraîchissement). |
-| Le thème est revenu à celui par défaut | Une mise à jour d'AMP a effacé `WebRoot/Themes/TeamKit*.css` : les recopier. |
+| Le thème est revenu à celui par défaut | Une mise à jour d'AMP a effacé `WebRoot/Themes/TeamKit*.css` : relancer l'installeur. |
+| Pas de bouton FR / EN | `fr.json` doit être dans `WebRoot/Locale/` (ouvrir `https://<ton-amp>/Locale/fr.json` : il doit s'afficher). Ctrl+F5. |
+| Encore du français après un clic sur EN | Ctrl+F5. Ancienne version de `TeamKitLang.js` : mettre à jour. Dans la console, `localStorage.AMPLocale` doit valoir `""`. |
+| Un texte reste en anglais | Il n'est pas encore dans le dictionnaire, ou AMP le fabrique en plusieurs morceaux : ouvrir une issue avec le texte exact. |
 
 ### Personnaliser
 
@@ -285,8 +292,12 @@ Installer : poser `TeamKitLang.js` et `fr.json` à côté de `install-stats.sh` 
 `WebRoot/Locale/fr.json` et ajoute la ligne `<script>`). Un texte non traduit reste simplement en anglais : une phrase
 n'est remplacée que si elle correspond exactement à une entrée du dictionnaire.
 
-Le dictionnaire suit le format d'AMP lui-même (`"Strings": { "texte anglais": "texte français" }`) : il servira aussi au
-moteur d'AMP si un choix de langue y est ajouté un jour.
+Le dictionnaire suit le format d'AMP lui-même (`"Strings": { "texte anglais": "texte français" }`). Le moteur d'AMP le lit
+aussi : `AMP.js` appelle `Locale.AutoLoadLocale()` au démarrage, d'après `localStorage.AMPLocale` ou `?lang=fr` dans l'adresse.
+Le bouton garde les deux d'accord (choisir EN vide aussi `AMPLocale`) : la page n'est jamais à moitié en français.
+
+Les variables des déclencheurs du planificateur (`Time`, `UserID`, `PreviousState`…) restent volontairement en anglais : ce
+sont des noms à recopier dans les tâches.
 
 ## Licence
 

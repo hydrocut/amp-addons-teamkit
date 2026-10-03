@@ -1,7 +1,10 @@
-# AMP add-ons by TeamKit
+# AMP add-ons: themes, stats bar, disk limits and French translation for CubeCoders AMP
 
-Small, unofficial customisations for [AMP by CubeCoders](https://cubecoders.com/AMP), made and used daily on the
-[TeamKit](https://www.teamkit.fr) game servers (French gaming community, free hosted servers).
+Free, unofficial add-ons for the [AMP game server panel by CubeCoders](https://cubecoders.com/AMP): two dark themes
+(one with a game-HUD Status page), a live **stats bar** for the whole machine, a **Disk** gauge with **per-instance disk
+limits** and an optional disk guard, and **AMP in French** with an FR | EN switch. Made and used daily on the
+[TeamKit](https://www.teamkit.fr) game servers (French gaming community, free hosted servers). Installs with one command
+on Linux, no AMP file is replaced.
 **🇫🇷 Version française complète : [LISEZMOI.md](LISEZMOI.md).**
 
 | Add-on | What it does | How it is installed |
@@ -189,7 +192,10 @@ removed by an update: keep a copy and put them back if the theme switches to the
 | Badges and gauge, but no bar | The bar is for admins only (`Core.UserManagement.ViewActiveSessions`). |
 | No bar for an admin | `typeof API` in the console must be `"object"`; `localStorage.tkStatsOff` must not be `"1"`. |
 | No Disk gauge on a Status page | Open the instance from ADS, not from its own port. Wait 15 s (one refresh). |
-| The theme went back to default | An AMP update removed `WebRoot/Themes/TeamKit*.css`: copy them again. |
+| The theme went back to default | An AMP update removed `WebRoot/Themes/TeamKit*.css`: run the installer again. |
+| No FR / EN switch | `fr.json` must be in `WebRoot/Locale/` (open `https://<your-amp>/Locale/fr.json`: it must load). Ctrl+F5. |
+| Still French after clicking EN | Ctrl+F5. Old version of `TeamKitLang.js`: update. In the console, `localStorage.AMPLocale` must be `""`. |
+| A text stays in English | It is not in the dictionary yet, or AMP builds it from several pieces: open an issue with the exact text. |
 
 ### Uninstall
 
@@ -285,8 +291,12 @@ Install: put `TeamKitLang.js` and `fr.json` next to `install-stats.sh` and run i
 `WebRoot/Locale/fr.json` and adds the `<script>` line). Untranslated text simply stays in English: a phrase is
 replaced only when it matches a dictionary entry exactly.
 
-The dictionary uses AMP's own format (`"Strings": { "English text": "French text" }`), so it also works with AMP's
-engine if a language picker is added one day.
+The dictionary uses AMP's own format (`"Strings": { "English text": "French text" }`). AMP's own engine also reads it:
+`AMP.js` calls `Locale.AutoLoadLocale()` at start-up, from `localStorage.AMPLocale` or `?lang=fr` in the address. The switch
+keeps both in step (choosing EN also clears `AMPLocale`), so the page is never half French.
+
+Trigger variables in the scheduler (`Time`, `UserID`, `PreviousState`…) are left in English on purpose: they are names you
+type in tasks.
 
 ## Licence
 

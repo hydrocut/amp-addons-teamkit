@@ -2,7 +2,7 @@
 
    Adds a row of tiles above the instance groups on the ADS Instances page: machine, servers running,
    players online, total RAM, total CPU and datastore usage (with its soft limit), plus a small
-   "💾 X GB" disk badge on every instance card. Texts follow the browser language (French or English).
+   "💾 X GB" disk badge on every instance card. Texts follow the FR | EN switch of TeamKitLang.js, else the browser language.
 
    Unofficial add-on: it only reads what ADS already sends to the page (API.ADSModule.GetInstancesAsync
    and GetDatastoresAsync), changes nothing, and fails silently. The bar is shown to users who have
@@ -17,7 +17,8 @@
   function estAdmin() {
     try { return typeof userHasPermission === 'function' && !!userHasPermission('Core.UserManagement.ViewActiveSessions'); } catch (e) { return false; }
   }
-  var FR = /^fr/i.test(navigator.language || '');
+  // même langue que le bouton FR | EN de TeamKitLang.js (localStorage.tkLang), sinon celle du navigateur
+  var FR = (function () { var v = null; try { v = localStorage.getItem('tkLang'); } catch (e) {} return v ? v === 'fr' : /^fr/i.test(navigator.language || ''); })();
   var LOC = FR ? 'fr-FR' : undefined;
   // les textes affichés, en français ou en anglais selon la langue du navigateur
   var T = FR ? {

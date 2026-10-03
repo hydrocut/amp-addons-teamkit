@@ -10,7 +10,8 @@
      which ADS shows in a same-origin frame.
    - Never touches what users typed or what the game prints: console, file names, editor, player names, inputs.
    - Switching back to English reloads the page, so nothing translated stays behind.
-   localStorage.tkLang = 'fr' | 'en' (unset = browser language). See README.md. */
+   localStorage.tkLang = 'fr' | 'en' (unset = browser language), mirrored into AMP's own localStorage.AMPLocale so both
+   engines agree. See README.md. */
 (function () {
   'use strict';
   var CLE = 'tkLang', DICO_URL = '/Locale/fr.json';
@@ -116,7 +117,7 @@
       x.setAttribute('aria-pressed', String(l === actuelle));
       x.addEventListener('click', function () {
         if (l === actuelle) return;
-        try { localStorage.setItem(CLE, l); } catch (e) {}
+        try { localStorage.setItem(CLE, l); localStorage.setItem('AMPLocale', l === 'fr' ? 'fr' : ''); } catch (e) {}
         location.reload();
       });
       b.appendChild(x);
@@ -142,6 +143,12 @@
       if (rep.ok) data = await rep.json();
     } catch (e) { data = null; }
     if (!data || !data.Strings) return; // pas de dictionnaire installé : on ne montre même pas le bouton
+    // AMP a son propre moteur : AMP.js appelle Locale.AutoLoadLocale() au démarrage, qui lit localStorage.AMPLocale
+    // (ou ?lang=). Sans cet alignement, un « fr » resté là traduirait la page même après un clic sur EN.
+    try {
+      var amp = localStorage.getItem('AMPLocale') || '', voulu = l === 'fr' ? 'fr' : '';
+      if (amp !== voulu) { localStorage.setItem('AMPLocale', voulu); if (amp === 'fr' && !/[?&]lang=/.test(location.search)) { location.reload(); return; } }
+    } catch (e) {}
     bouton(l);
     if (l !== 'fr') return;
     dico = data.Strings;

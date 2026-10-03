@@ -164,7 +164,9 @@
     var v = t.querySelector('circle.value');
     if (v) {
       var longueur = parseFloat(doc.defaultView.getComputedStyle(v).strokeDasharray) || 402;
-      v.style.strokeDashoffset = (longueur * (1 - part)).toFixed(1) + 'px';
+      // AMP : trait de 402 pour un tour de 2πr = 201 (r = 32), plein quand le décalage vaut 402 − 201
+      var tour = (v.getTotalLength && v.getTotalLength()) || 2 * Math.PI * (parseFloat(v.getAttribute('r')) || 32);
+      v.style.strokeDashoffset = (longueur - part * tour).toFixed(1) + 'px';
       v.style.stroke = tn ? TEINTES[tn] : '';
     }
     t.title = titre.replace('%P', Math.round(pct));

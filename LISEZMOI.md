@@ -1,11 +1,12 @@
 # Ajouts pour AMP : thèmes, barre de stats, limites disque et AMP en français (CubeCoders)
 
+> **🇫🇷 Version française** · 🇬🇧 [English version: README.md](README.md)
+
 Des ajouts gratuits et non officiels pour le [panel de serveurs de jeux AMP de CubeCoders](https://cubecoders.com/AMP) :
 deux thèmes sombres (dont un avec une page État façon écran de jeu), une **barre de stats** de toute la machine, une jauge
 **Disque** avec des **limites par serveur** et un gardien disque facultatif, et **AMP en français** avec un bouton FR | EN.
 Faits et utilisés tous les jours sur les serveurs de [TeamKit](https://www.teamkit.fr), communauté de joueurs française aux
 serveurs gratuits. Une commande pour tout installer sous Linux, aucun fichier d'AMP remplacé.
-*English version: [README.md](README.md).*
 
 | Ajout | Ce qu'il fait | Comment il s'installe |
 |---|---|---|
@@ -35,7 +36,34 @@ La barre de stats marche dans **les quatre vues** de la page Instances (les quat
 
 *Captures prises sur le panel TeamKit ; les adresses des serveurs sont masquées.*
 
-## Installation pas à pas
+## Installer en une commande (conseillé)
+
+Sur la machine où tourne AMP (en SSH, ou avec PuTTY depuis Windows), copie cette ligne, colle-la, appuie sur Entrée :
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/hydrocut/amp-addons-teamkit/main/setup.sh -o /tmp/amp-addons-setup.sh && sudo sh /tmp/amp-addons-setup.sh
+```
+
+L'installeur demande la **langue** (English / Français), trouve ton instance ADS, montre ce qui est déjà installé,
+puis te laisse choisir, par des questions oui / non :
+
+- les thèmes, la barre de stats et la jauge Disque, AMP en français ;
+- la remise en place automatique après les mises à jour d'AMP (cron, toutes les 30 minutes) ;
+- les limites disque et le gardien, réglés par des questions (affichage, limite par défaut, seuils, couper le jeu ou non).
+
+**Relance-le quand tu veux** : *Mettre à jour seulement ce qui est installé* pour la nouvelle version, *Installer ou mettre
+à jour* pour ajouter les nouvelles fonctions, ou *Tout désinstaller*. Rien n'est jamais redémarré. Les fois suivantes, il
+est déjà sur la machine :
+
+```sh
+sudo sh /opt/amp-addons-teamkit/setup.sh
+```
+
+Pas de `curl` ? D'abord `sudo apt-get install -y curl` (ou `git` : l'installeur prend celui qui est là).
+
+## Installation à la main, pas à pas
+
+La même chose sans les questions, si tu préfères voir chaque étape.
 
 Il faut : AMP déjà installé sur une machine **Linux** (l'installation habituelle de cubecoders.com), et un terminal sur
 cette machine avec `sudo` (en SSH, ou PuTTY depuis Windows). Chaque bloc gris est **une commande** : la copier, la coller,
@@ -129,7 +157,7 @@ Un thème ne peut pas ajouter de chiffres, d'où ce petit script. Il **lit** seu
 - **Les pastilles disque** : visibles pour tout le monde, chacun pour ses propres instances.
 - **La jauge Disque** de la page État : visible par toute personne qui peut ouvrir ce serveur. Son rond = disque du serveur
   divisé par la limite du stockage (la seule limite qu'ADS connaisse) ; sans accès aux stockages, le rond reste vide.
-- Les textes suivent la langue du navigateur : français ou anglais.
+- Les textes suivent le bouton FR | EN (partie 4), sinon la langue du navigateur.
 
 ### Il faut
 
@@ -207,7 +235,7 @@ Dans la console : `localStorage.tkStatsOff = '1'` (et `localStorage.removeItem('
 
 ### Désinstaller
 
-Remettre la sauvegarde `AMP.html.before-stats-*` la plus récente (ou supprimer la ligne `TeamKitStats.js`), puis supprimer `WebRoot/Scripts/TeamKitStats.js`
+Le plus simple : `sudo sh /opt/amp-addons-teamkit/setup.sh` → *Tout désinstaller*. À la main : remettre la sauvegarde `AMP.html.before-stats-*` la plus récente (ou supprimer la ligne `TeamKitStats.js`), puis supprimer `WebRoot/Scripts/TeamKitStats.js`
 et la ligne cron si elle a été ajoutée.
 
 ## 3. Limites disque et gardien (facultatif)

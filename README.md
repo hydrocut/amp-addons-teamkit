@@ -1,11 +1,12 @@
 # AMP add-ons: themes, stats bar, disk limits and French translation for CubeCoders AMP
 
+> **🇫🇷 Version française complète : [LISEZMOI.md](LISEZMOI.md)** · 🇬🇧 English below
+
 Free, unofficial add-ons for the [AMP game server panel by CubeCoders](https://cubecoders.com/AMP): two dark themes
 (one with a game-HUD Status page), a live **stats bar** for the whole machine, a **Disk** gauge with **per-instance disk
 limits** and an optional disk guard, and **AMP in French** with an FR | EN switch. Made and used daily on the
 [TeamKit](https://www.teamkit.fr) game servers (French gaming community, free hosted servers). Installs with one command
 on Linux, no AMP file is replaced.
-**🇫🇷 Version française complète : [LISEZMOI.md](LISEZMOI.md).**
 
 | Add-on | What it does | How it is installed |
 |---|---|---|
@@ -35,7 +36,33 @@ The stats bar works in **all four layouts** of the Instances page (the four butt
 
 *Screenshots taken on the TeamKit panel; server addresses are hidden.*
 
-## Quick install, step by step
+## Install in one command (recommended)
+
+On the machine where AMP runs (over SSH, or PuTTY from Windows), copy this line, paste it, press Enter:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/hydrocut/amp-addons-teamkit/main/setup.sh -o /tmp/amp-addons-setup.sh && sudo sh /tmp/amp-addons-setup.sh
+```
+
+The installer asks the **language** (English / Français), finds your ADS instance, shows what is already installed,
+then lets you pick, with yes / no questions:
+
+- the themes, the stats bar and Disk gauge, AMP in French;
+- the automatic repair after AMP updates (cron, every 30 minutes);
+- the disk limits and guard, set up by questions (display mode, default limit, thresholds, stop the game or not).
+
+**Run it again any time**: choose *Only update what is installed* to get the new version, *Install or update* to add
+the new features, or *Uninstall everything*. Nothing is ever restarted. Next times, it is already on the machine:
+
+```sh
+sudo sh /opt/amp-addons-teamkit/setup.sh
+```
+
+No `curl`? `sudo apt-get install -y curl` first (or `git`, the installer uses whichever is there).
+
+## Manual install, step by step
+
+The same, without the questions, if you prefer to see each step.
 
 You need: AMP already installed on a **Linux** machine (the usual install from cubecoders.com), and a terminal on
 that machine with `sudo` (over SSH, or PuTTY from Windows). Each grey block is **one command**: copy it, paste it,
@@ -132,7 +159,7 @@ It changes nothing, refreshes every 15 s, and fails silently (no error can break
 - The **disk badges** are shown to everyone, each user seeing only their own instances.
 - The **Disk gauge** on an instance Status page is shown to everyone who can open that instance. Its ring is the
   instance disk divided by the datastore soft limit (the only limit ADS knows); without access to the datastores the ring stays empty.
-- Texts follow the browser language: French or English.
+- Texts follow the FR | EN switch (section 4), otherwise the browser language.
 
 ### Requirements
 
@@ -199,7 +226,7 @@ removed by an update: keep a copy and put them back if the theme switches to the
 
 ### Uninstall
 
-Restore the newest `AMP.html.before-stats-*` (or delete the `TeamKitStats.js` line), then delete `WebRoot/Scripts/TeamKitStats.js`
+Easiest: `sudo sh /opt/amp-addons-teamkit/setup.sh` → *Uninstall everything*. By hand: restore the newest `AMP.html.before-stats-*` (or delete the `TeamKitStats.js` line), then delete `WebRoot/Scripts/TeamKitStats.js`
 and the cron line if you added one.
 
 ### Customise

@@ -7,6 +7,7 @@
 #   TeamKitStats.js  stats bar, disk badges and Disk gauge
 #   TeamKitLang.js   French for AMP (needs fr.json)
 #   fr.json          the dictionary, copied to WebRoot/Locale/fr.json
+# Easiest: run setup.sh instead (questions, language, update, uninstall). This script is what setup.sh and cron call.
 # Safe to run again and again (by hand or from cron): it only writes when something is missing or changed.
 #   - file missing or different -> copied; for a script, its ?v= is bumped (browser cache)
 #   - <script> line missing     -> added before </body>, after a backup (AMP.html.before-stats-<date>)
@@ -50,10 +51,14 @@ script() {   # $1 = file name in Scripts/
   fi
 }
 
-script TeamKitStats.js
-script TeamKitLang.js
+# Components chosen with setup.sh (one per line: themes, stats, lang). No file = install everything present.
+COMPONENTS="${AMP_ADDONS_COMPONENTS:-/etc/amp-addons-teamkit/components}"
+want() { [ -f "$COMPONENTS" ] || return 0; grep -qx "$1" "$COMPONENTS"; }
 
-for T in TeamKit.css TeamKit-HUD.css; do   # themes: then pick one in ADS > Configuration
+if want stats; then script TeamKitStats.js; fi
+if want lang; then script TeamKitLang.js; fi
+
+want themes && for T in TeamKit.css TeamKit-HUD.css; do   # themes: then pick one in ADS > Configuration
   N="${T%.css}"
   # Installed from the AMP theme store (Themes/AMPThemes/<Name>/)? Then leave it to the store: a local file with the
   # same name would win over it (checked on AMP 2.8.0.8) and could hide a newer store version.
@@ -73,7 +78,7 @@ for T in TeamKit.css TeamKit-HUD.css; do   # themes: then pick one in ADS > Conf
   fi
 done
 
-if [ -f "$SRC/fr.json" ] && ! cmp -s "$SRC/fr.json" "$W/Locale/fr.json"; then
+if want lang && [ -f "$SRC/fr.json" ] && ! cmp -s "$SRC/fr.json" "$W/Locale/fr.json"; then
   install -d -o "$U" -g "$G" -m 755 "$W/Locale"
   install -o "$U" -g "$G" -m 644 "$SRC/fr.json" "$W/Locale/fr.json"
   CHANGED=1

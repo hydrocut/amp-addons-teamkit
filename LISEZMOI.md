@@ -332,16 +332,17 @@ Farming Simulator 25, Node.js, MySQL, MariaDB, PostgreSQL…).
 - Un petit bouton **FR | EN** dans la barre du haut, à côté de la recherche, permet de changer (en bas à droite sur la page de connexion) ; le choix est gardé dans ce navigateur (`localStorage.tkLang`).
 - Les pages des serveurs ouvertes depuis ADS sont traduites aussi.
 - Jamais traduits : la console, les noms de fichiers, l'éditeur de fichiers, les noms des joueurs, ce qu'on tape dans un champ.
-- Revenir à l'anglais recharge la page : rien ne reste à moitié traduit.
+- Le changement se fait **sur place, sans recharger** : chaque texte traduit garde son anglais d'origine et le retrouve ;
+  la barre de stats se réécrit dans la nouvelle langue.
 - Sans `fr.json` installé, le script ne fait rien et n'affiche pas de bouton.
 
 Installer : poser `TeamKitLang.js` et `fr.json` à côté de `install-stats.sh` et le lancer (il copie `fr.json` dans
 `WebRoot/Locale/fr.json` et ajoute la ligne `<script>`). Un texte non traduit reste simplement en anglais : une phrase
 n'est remplacée que si elle correspond exactement à une entrée du dictionnaire.
 
-Le dictionnaire suit le format d'AMP lui-même (`"Strings": { "texte anglais": "texte français" }`). Le moteur d'AMP le lit
-aussi : `AMP.js` appelle `Locale.AutoLoadLocale()` au démarrage, d'après `localStorage.AMPLocale` ou `?lang=fr` dans l'adresse.
-Le bouton garde les deux d'accord (choisir EN vide aussi `AMPLocale`) : la page n'est jamais à moitié en français.
+Le dictionnaire suit le format d'AMP lui-même (`"Strings": { "texte anglais": "texte français" }`). Le moteur d'AMP pourrait le lire
+aussi (`AMP.js` appelle `Locale.AutoLoadLocale()` au démarrage, d'après `localStorage.AMPLocale` ou `?lang=fr`), mais l'ajout le
+laisse **éteint** (il vide `AMPLocale`) : ce que traduit le moteur d'AMP ne se défait qu'en rechargeant la page.
 
 Les variables des déclencheurs du planificateur (`Time`, `UserID`, `PreviousState`…) restent volontairement en anglais : ce
 sont des noms à recopier dans les tâches.

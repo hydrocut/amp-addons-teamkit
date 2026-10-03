@@ -18,23 +18,30 @@
   function estAdmin() {
     try { return typeof userHasPermission === 'function' && !!userHasPermission('Core.UserManagement.ViewActiveSessions'); } catch (e) { return false; }
   }
-  // même langue que le bouton FR | EN de TeamKitLang.js (localStorage.tkLang), sinon celle du navigateur
-  var FR = (function () { var v = null; try { v = localStorage.getItem('tkLang'); } catch (e) {} return v ? v === 'fr' : /^fr/i.test(navigator.language || ''); })();
-  var LOC = FR ? 'fr-FR' : undefined;
-  // les textes affichés, en français ou en anglais selon la langue du navigateur
-  var T = FR ? {
+  // même langue que le bouton FR | EN de TeamKitLang.js (localStorage.tkLang), sinon celle du navigateur ; le bouton
+  // change la langue sur place et prévient par l'événement « tk-lang » : la barre se redessine aussitôt
+  var FR, LOC, T;
+  function majLangue() {
+    var v = null; try { v = localStorage.getItem('tkLang'); } catch (e) {}
+    FR = v ? v === 'fr' : /^fr/i.test(navigator.language || '');
+    LOC = FR ? 'fr-FR' : undefined;
+    T = FR ? TFR : TEN;
+  }
+  var TFR = {
     go: ' Go', machine: 'Machine', serveur: 'Serveur', threads: ' threads · ', deRam: ' de RAM', serveurs: 'Serveurs', enJeu: ' en jeu',
     demarres: ' démarrés sur ', joueurs: 'Joueurs connectés', sur: 'sur ', places: ' places ouvertes', ram: 'RAM des serveurs', des: ' % des ',
     cpu: 'CPU cumulé', somme: 'somme des serveurs démarrés', disque: 'Disque des serveurs', limite: ' % de la limite de ', restants: ' restants',
     instances: ' instances', maj: 'mis à jour à ', pastille: 'Disque occupé par cette instance (relevé par ADS)', tuileDisque: 'Disque',
     tuileTous: 'Disque (tous)', deSaLimite: ' % de la limite de ce serveur', tous: 'Tous les serveurs de la machine', auDela: ' au-delà de leur limite'
-  } : {
+  };
+  var TEN = {
     go: ' GB', machine: 'Machine', serveur: 'Server', threads: ' threads · ', deRam: ' RAM', serveurs: 'Servers', enJeu: ' running',
     demarres: ' started out of ', joueurs: 'Players online', sur: 'of ', places: ' open slots', ram: 'Server RAM', des: ' % of ',
     cpu: 'Total CPU', somme: 'sum of started servers', disque: 'Server disk', limite: ' % of the ', restants: ' left',
     instances: ' instances', maj: 'updated at ', pastille: 'Disk used by this instance (reported by ADS)', tuileDisque: 'Disk',
     tuileTous: 'Disk (all)', deSaLimite: ' % of this server limit', tous: 'All servers of the machine', auDela: ' over their limit'
   };
+  majLangue();
   function go(mb) { return (mb / 1024).toLocaleString(LOC, { maximumFractionDigits: mb >= 102400 ? 0 : 1 }) + T.go; }
   function metrique(i, nom) { var m = i && i.Metrics && i.Metrics[nom]; return m ? Number(m.RawValue) || 0 : 0; }
   /** Limites publiées par disk-guard.py (facultatif) : relues au plus une fois par minute, null si le fichier n'existe pas. */
@@ -270,6 +277,11 @@
     } catch (e) { /* jamais d'erreur visible dans ADS */ }
   }
 
+  window.addEventListener('tk-lang', function () {
+    majLangue(); derniere = 0; disqueInstance.quand = 0;
+    var t0 = cadreServeur(), t = t0 && t0.doc.getElementById(TUILE); if (t) t.remove();   // la jauge se refait dans la langue choisie
+    rafraichir();
+  });
   function demarrer() { if (minuterie) return; minuterie = setInterval(rafraichir, 3000); rafraichir(); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', demarrer); else demarrer();
 })();

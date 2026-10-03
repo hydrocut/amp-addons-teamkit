@@ -327,16 +327,17 @@ MySQL, MariaDB, PostgreSQL…).
 - A small **FR | EN** switch in the top bar, next to the search box, changes it (bottom right on the login page); the choice is kept in that browser (`localStorage.tkLang`).
 - Instance pages opened from ADS are translated too.
 - Never translated: the console, file names, the file editor, player names, anything typed in a field.
-- Going back to English reloads the page, so nothing stays half translated.
+- Switching happens **in place, without reloading**: every translated text remembers its English original and gets it
+  back; the stats bar redraws itself in the new language.
 - No `fr.json` installed = the script does nothing and shows no switch.
 
 Install: put `TeamKitLang.js` and `fr.json` next to `install-stats.sh` and run it (it copies `fr.json` to
 `WebRoot/Locale/fr.json` and adds the `<script>` line). Untranslated text simply stays in English: a phrase is
 replaced only when it matches a dictionary entry exactly.
 
-The dictionary uses AMP's own format (`"Strings": { "English text": "French text" }`). AMP's own engine also reads it:
-`AMP.js` calls `Locale.AutoLoadLocale()` at start-up, from `localStorage.AMPLocale` or `?lang=fr` in the address. The switch
-keeps both in step (choosing EN also clears `AMPLocale`), so the page is never half French.
+The dictionary uses AMP's own format (`"Strings": { "English text": "French text" }`). AMP's own engine could read it too
+(`AMP.js` calls `Locale.AutoLoadLocale()` at start-up, from `localStorage.AMPLocale` or `?lang=fr`), but the add-on keeps it
+**off** (it empties `AMPLocale`): what AMP's engine translates can only be undone by reloading the page.
 
 Trigger variables in the scheduler (`Time`, `UserID`, `PreviousState`…) are left in English on purpose: they are names you
 type in tasks.

@@ -9,6 +9,7 @@ tous les jours sur les serveurs de [TeamKit](https://www.teamkit.fr). *English v
 | **Thème TeamKit-HUD** | le même, avec une page État façon écran de jeu : trois grands cadrans lumineux et de gros boutons ronds | un thème CSS, la voie officielle |
 | **Barre de stats** | des tuiles au-dessus de la liste des instances (machine, serveurs en marche, joueurs, RAM, CPU, disque et sa limite), une pastille `💾 X Go` sur chaque carte et une quatrième jauge **Disque** sur la page État de chaque serveur | un fichier JavaScript + une ligne dans `AMP.html` |
 | **Limites disque et gardien** | une limite par jeu ou par serveur dans un fichier de config : jauges et pastilles en `occupé / limite`, et (si on veut) le jeu coupé quand le disque est plein, gestionnaire de fichiers et SFTP restant ouverts | `disk-guard.py`, toutes les 5 minutes (facultatif) |
+| **AMP en français** | le panel en français pour les navigateurs en français, avec un bouton FR / EN ; réglages des jeux compris | `TeamKitLang.js` + `fr.json` |
 
 ## Captures
 
@@ -30,6 +31,76 @@ La barre de stats marche dans **les quatre vues** de la page Instances (les quat
 
 *Captures prises sur le panel TeamKit ; les adresses des serveurs sont masquées.*
 
+## Installation pas à pas
+
+Il faut : AMP déjà installé sur une machine **Linux** (l'installation habituelle de cubecoders.com), et un terminal sur
+cette machine avec `sudo` (en SSH, ou PuTTY depuis Windows). Chaque bloc gris est **une commande** : la copier, la coller,
+appuyer sur Entrée, attendre que l'invite revienne.
+
+**1. Récupérer les ajouts** (une seule fois) :
+
+```sh
+sudo apt-get install -y git python3
+```
+
+```sh
+sudo git clone https://github.com/hydrocut/amp-addons-teamkit.git /opt/amp-addons-teamkit
+```
+
+**2. Les installer** (thèmes, barre de stats, français ; rien n'est redémarré) :
+
+```sh
+sudo sh /opt/amp-addons-teamkit/install-stats.sh
+```
+
+Il répond `Installed. Reload the ADS page (Ctrl+F5).` Si ton instance ADS ne s'appelle pas `ADS01`, ajoute son nom :
+`sudo sh /opt/amp-addons-teamkit/install-stats.sh MonADS`.
+
+**3. Dans le navigateur** : ouvre AMP, appuie sur **Ctrl+F5**. Pour le thème : ADS → **Configuration** → thème
+**TeamKit** ou **TeamKit-HUD** → enregistrer. Un navigateur réglé en français affiche maintenant AMP en français, avec un
+bouton **FR | EN** en bas à droite.
+
+**4. Les garder après les mises à jour d'AMP** (conseillé) : une mise à jour d'AMP retire les ajouts, cette ligne les remet
+toute seule en moins de 30 minutes.
+
+```sh
+echo '*/30 * * * * root sh /opt/amp-addons-teamkit/install-stats.sh >/dev/null' | sudo tee /etc/cron.d/amp-addons-teamkit
+```
+
+**5. Facultatif, les limites disque** : voir la [partie 3](#3-limites-disque-et-gardien-facultatif).
+
+**Mettre à jour les ajouts plus tard** (nouvelle version sur GitHub) :
+
+```sh
+sudo git -C /opt/amp-addons-teamkit pull && sudo sh /opt/amp-addons-teamkit/install-stats.sh
+```
+
+### Compatibilité
+
+| | État |
+|---|---|
+| AMP 2.8.0.8 « Proteus » | ✅ testé (tout) |
+| Autres AMP 2.8.x | devrait marcher ; les thèmes sont sans risque, les scripts ne lisent que ce que la page charge déjà |
+| AMP 2.7 et avant | non testé |
+| Linux : Debian 12 | ✅ testé |
+| Linux : Ubuntu, autres dérivés de Debian | devrait marcher (il faut `sh`, `sed`, `cmp`, `install` ; `python3` pour le gardien disque) |
+| AMP sous Windows | thèmes : copier les CSS à la main dans `WebRoot\Themes` de l'instance ADS ; scripts et installeur : **non pris en charge** |
+| Instances en Docker ou non | ✅ les deux (testé avec Docker) |
+| Plusieurs machines (ADS + cibles) | la barre additionne toutes les cibles ; gardien et installeur tournent sur la machine d'ADS ; testé sur une seule machine |
+| Navigateurs | Chrome / Edge ✅ testés ; Firefox 121+ devrait marcher (la grille à 4 jauges utilise `:has()` en CSS) |
+
+### Ce que ça change sur ta machine (et ce que ça ne change pas)
+
+- **Thèmes** : deux fichiers CSS dans `WebRoot/Themes/`, la voie officielle pour ajouter un thème.
+- **Scripts** : copiés dans `WebRoot/Scripts/`, plus **une ligne chacun** dans `WebRoot/AMP.html` (sauvegarde gardée). C'est
+  la seule partie non officielle : AMP n'a pas de système d'extensions pour sa page web. Rien d'autre n'est modifié :
+  aucun programme d'AMP, aucun réglage, aucune instance.
+- **Lecture seule dans le navigateur** : les scripts n'appellent que ce que la page d'AMP utilise déjà (`GetInstances`,
+  `GetDatastores`) ; ils ne changent jamais un réglage.
+- **Gardien disque** (seulement si tu l'installes) : passe par l'API officielle d'AMP avec un compte que tu crées, et en mode
+  affichage ne change rien du tout.
+- **Tout enlever** : voir *Désinstaller* plus bas ; ton AMP redevient normal.
+
 ## 1. Les thèmes (officiel, sans risque)
 
 AMP charge tout fichier CSS posé dans `ADS01/WebRoot/Themes/`.
@@ -37,6 +108,12 @@ AMP charge tout fichier CSS posé dans `ADS01/WebRoot/Themes/`.
 1. Copier `TeamKit.css` (ou `TeamKit-HUD.css`) dans `/home/amp/.ampdata/instances/ADS01/WebRoot/Themes/`.
 2. Dans ADS → **Configuration**, choisir le thème et enregistrer. Le thème d'ADS s'applique aussi aux pages des instances ouvertes depuis ADS.
 3. Pour le voir sans le choisir : `https://<ton-amp>/ThemePreview.html?theme=TeamKit`.
+
+`install-stats.sh` pose les deux thèmes à ta place. Si un thème vient déjà de la boutique officielle des thèmes d'AMP
+(`Themes/AMPThemes/<Nom>/`), l'installeur la laisse faire : un fichier local du même nom passerait avant la copie de la
+boutique et pourrait cacher une version plus récente. Il ne supprime jamais que les fichiers de thème qu'il a posés lui-même.
+
+Les deux thèmes sont aussi proposés à la boutique officielle ([CubeCoders/AMPThemes](https://github.com/CubeCoders/AMPThemes)).
 
 ## 2. La barre de stats (non officielle, en lecture seule)
 
@@ -59,8 +136,8 @@ Un thème ne peut pas ajouter de chiffres, d'où ce petit script. Il **lit** seu
 ### Installer (Linux)
 
 ```sh
-sudo sh install-stats.sh            # ADS01 et ./TeamKitStats.js par défaut
-sudo sh install-stats.sh MonADS /chemin/TeamKitStats.js
+sudo sh install-stats.sh            # ADS01 et le dossier du script par défaut
+sudo sh install-stats.sh MonADS /chemin/vers/amp-addons-teamkit
 ```
 
 Le script copie `TeamKitStats.js` dans `WebRoot/Scripts/`, ajoute une seule ligne `<script>` avant `</body>` de
@@ -86,7 +163,7 @@ quelque chose, une tâche cron peut la remettre toute seule :
 
 ```sh
 # /etc/cron.d/teamkit-stats : toutes les 30 minutes, muet quand il n'y a rien à faire
-*/30 * * * * root sh /opt/amp-addons-teamkit/install-stats.sh ADS01 /opt/amp-addons-teamkit/TeamKitStats.js >/dev/null
+*/30 * * * * root sh /opt/amp-addons-teamkit/install-stats.sh >/dev/null
 ```
 
 Chemins absolus obligatoires (cron ne démarre pas dans le dossier du dépôt). Une mise à jour peut aussi effacer les thèmes
@@ -161,16 +238,16 @@ Ordre de priorité pour un serveur : `instances` > `import` > `templates` > `def
 ### Installer
 
 ```sh
-sudo install -d -m 755 /opt/amp-addons-teamkit && sudo install -d -m 700 /etc/amp-addons-teamkit
-sudo install -m 755 disk-guard.py /opt/amp-addons-teamkit/
-sudo install -m 600 disk-limits.example.json /etc/amp-addons-teamkit/disk-limits.json   # puis le remplir
-sudo python3 /opt/amp-addons-teamkit/disk-guard.py --dry-run --verbose                  # montre ce qu'il ferait
+sudo install -d -m 700 /etc/amp-addons-teamkit
+sudo install -m 600 /opt/amp-addons-teamkit/disk-limits.example.json /etc/amp-addons-teamkit/disk-limits.json
+sudo nano /etc/amp-addons-teamkit/disk-limits.json            # écrire ses limites (Ctrl+O pour enregistrer, Ctrl+X pour quitter)
+sudo python3 /opt/amp-addons-teamkit/disk-guard.py --dry-run --verbose   # montre ce qu'il ferait
 ```
 
-Puis toutes les 5 minutes, par exemple dans `/etc/cron.d/amp-disk-guard` :
+Puis toutes les 5 minutes (une commande, elle crée `/etc/cron.d/amp-disk-guard`) :
 
 ```sh
-*/5 * * * * root /usr/bin/python3 /opt/amp-addons-teamkit/disk-guard.py >> /var/log/amp-disk-guard.log 2>&1
+echo '*/5 * * * * root /usr/bin/python3 /opt/amp-addons-teamkit/disk-guard.py >> /var/log/amp-disk-guard.log 2>&1' | sudo tee /etc/cron.d/amp-disk-guard
 ```
 
 Il écrit `WebRoot/Scripts/TeamKitDisk.json` dans l'instance ADS (seulement si quelque chose a changé) : mode
@@ -187,6 +264,29 @@ mot de passe seul dans le `password_file` (`chmod 600`).
   mettre quelques minutes à suivre, et un jeu relancé trop tôt peut être recoupé une fois.
 - Couper le jeu n'est pas un vrai quota : ce qu'on dépose pendant que le jeu est arrêté (envoi en SFTP) n'est pas bloqué.
 - Tester d'abord avec `"enforce": false` et `--dry-run`.
+
+## 4. AMP en français (facultatif)
+
+AMP 2.8 contient déjà un moteur de traduction (`Scripts/Locale.js`, dictionnaires dans `WebRoot/Locale/<iso>.json`),
+mais rien dans l'interface ne l'allume. `TeamKitLang.js` le fait, avec `fr.json`, un dictionnaire français d'environ
+2 900 phrases : les pages du panel, les réglages d'ADS, les permissions, les tâches du planificateur, et la
+**Configuration** de 22 sortes d'instances (Minecraft Java et Bedrock, Garry's Mod, Counter-Strike 1.6 et Source,
+FiveM, Barotrauma, DDNet, Teeworlds, Luanti, BeamMP, SA-MP, RimWorld, Eco, Empyrion, Euro Truck Simulator 2,
+Farming Simulator 25, Node.js, MySQL, MariaDB, PostgreSQL…).
+
+- Un navigateur réglé en français affiche le panel en français ; les autres restent en anglais.
+- Un petit bouton **FR | EN** en bas à droite permet de changer ; le choix est gardé dans ce navigateur (`localStorage.tkLang`).
+- Les pages des serveurs ouvertes depuis ADS sont traduites aussi.
+- Jamais traduits : la console, les noms de fichiers, l'éditeur de fichiers, les noms des joueurs, ce qu'on tape dans un champ.
+- Revenir à l'anglais recharge la page : rien ne reste à moitié traduit.
+- Sans `fr.json` installé, le script ne fait rien et n'affiche pas de bouton.
+
+Installer : poser `TeamKitLang.js` et `fr.json` à côté de `install-stats.sh` et le lancer (il copie `fr.json` dans
+`WebRoot/Locale/fr.json` et ajoute la ligne `<script>`). Un texte non traduit reste simplement en anglais : une phrase
+n'est remplacée que si elle correspond exactement à une entrée du dictionnaire.
+
+Le dictionnaire suit le format d'AMP lui-même (`"Strings": { "texte anglais": "texte français" }`) : il servira aussi au
+moteur d'AMP si un choix de langue y est ajouté un jour.
 
 ## Licence
 

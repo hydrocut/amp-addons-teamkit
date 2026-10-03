@@ -1,40 +1,83 @@
 #!/bin/sh
-# Install the TeamKit stats bar into an AMP ADS instance (Linux).
-#   sudo sh install-stats.sh [ADS instance name] [path to TeamKitStats.js]
-# Defaults: ADS01, ./TeamKitStats.js.
+# Install (or repair after an AMP update) the TeamKit add-ons into an AMP ADS instance (Linux).
+#   sudo sh install-stats.sh [ADS instance name] [folder of the add-on files]
+# Defaults: ADS01, the folder of this script.
+# Installs whatever is present in that folder:
+#   TeamKit.css, TeamKit-HUD.css  the themes (WebRoot/Themes/), to pick in ADS > Configuration
+#   TeamKitStats.js  stats bar, disk badges and Disk gauge
+#   TeamKitLang.js   French for AMP (needs fr.json)
+#   fr.json          the dictionary, copied to WebRoot/Locale/fr.json
 # Safe to run again and again (by hand or from cron): it only writes when something is missing or changed.
-#   - script missing or different  -> copied, and the ?v= of the <script> line is bumped (browser cache)
-#   - <script> line missing         -> added before </body>, after a backup (AMP.html.before-stats-<date>)
-#   - everything already in place   -> nothing is touched, prints "Already installed."
+#   - file missing or different -> copied; for a script, its ?v= is bumped (browser cache)
+#   - <script> line missing     -> added before </body>, after a backup (AMP.html.before-stats-<date>)
+#   - everything in place       -> nothing is touched, prints "Already installed."
 # An AMP update rewrites AMP.html: run it again afterwards, or let cron do it (see README).
 set -e
 ADS="${1:-ADS01}"
-SRC="${2:-./TeamKitStats.js}"
+SRC="${2:-$(dirname "$0")}"
+[ -f "$SRC" ] && SRC="$(dirname "$SRC")"     # older usage: path to TeamKitStats.js
 AMPDATA="${AMPDATA:-/home/amp/.ampdata/instances}"
 W="$AMPDATA/$ADS/WebRoot"
-DST="$W/Scripts/TeamKitStats.js"
 [ -f "$W/AMP.html" ] || { echo "Not found: $W/AMP.html (set AMPDATA or pass the ADS instance name)"; exit 1; }
-[ -f "$SRC" ] || { echo "Not found: $SRC"; exit 1; }
 OWNER="$(stat -c %U:%G "$W/AMP.html")"
+U="${OWNER%%:*}"; G="${OWNER##*:}"
 V="$(date +%s)"
 CHANGED=0
+BACKUP_DONE=0
 
-if ! cmp -s "$SRC" "$DST"; then
-  install -o "${OWNER%%:*}" -g "${OWNER##*:}" -m 644 "$SRC" "$DST"
-  CHANGED=1
-  echo "Script copied to $DST"
-fi
-
-if grep -q 'TeamKitStats.js' "$W/AMP.html"; then
-  if [ "$CHANGED" = 1 ]; then
-    sed -i "s#TeamKitStats.js?v=[0-9]*#TeamKitStats.js?v=$V#" "$W/AMP.html"   # new version: bust the browser cache
-    echo "Cache version bumped in AMP.html"
+script() {   # $1 = file name in Scripts/
+  F="$1"
+  [ -f "$SRC/$F" ] || return 0
+  NEW=0
+  if ! cmp -s "$SRC/$F" "$W/Scripts/$F"; then
+    install -o "$U" -g "$G" -m 644 "$SRC/$F" "$W/Scripts/$F"
+    NEW=1; CHANGED=1
+    echo "Copied $F"
   fi
-else
-  cp -p "$W/AMP.html" "$W/AMP.html.before-stats-$(date +%Y%m%d-%H%M%S)"
-  sed -i "s#</body>#    <script type=\"text/javascript\" src=\"/Scripts/TeamKitStats.js?v=$V\"></script>\n</body>#" "$W/AMP.html"
+  if grep -q "/Scripts/$F" "$W/AMP.html"; then
+    if [ "$NEW" = 1 ]; then
+      sed -i "s#/Scripts/$F?v=[0-9]*#/Scripts/$F?v=$V#" "$W/AMP.html"
+      echo "Cache version bumped for $F"
+    fi
+  else
+    if [ "$BACKUP_DONE" = 0 ]; then
+      cp -p "$W/AMP.html" "$W/AMP.html.before-stats-$(date +%Y%m%d-%H%M%S)"
+      BACKUP_DONE=1
+    fi
+    sed -i "s#</body>#    <script type=\"text/javascript\" src=\"/Scripts/$F?v=$V\"></script>\n</body>#" "$W/AMP.html"
+    CHANGED=1
+    echo "Script line added for $F (backup of AMP.html kept next to it)"
+  fi
+}
+
+script TeamKitStats.js
+script TeamKitLang.js
+
+for T in TeamKit.css TeamKit-HUD.css; do   # themes: then pick one in ADS > Configuration
+  N="${T%.css}"
+  # Installed from the AMP theme store (Themes/AMPThemes/<Name>/)? Then leave it to the store: a local file with the
+  # same name would win over it (checked on AMP 2.8.0.8) and could hide a newer store version.
+  if [ -f "$W/Themes/AMPThemes/$N/$T" ]; then
+    if [ -f "$W/Themes/$T" ] && [ -f "$W/Themes/.$N.by-teamkit-installer" ]; then
+      rm -f "$W/Themes/$T" "$W/Themes/.$N.by-teamkit-installer"; CHANGED=1
+      echo "Theme $N now comes from the AMP theme store: local copy removed"
+    fi
+    continue
+  fi
+  if [ -f "$SRC/$T" ] && ! cmp -s "$SRC/$T" "$W/Themes/$T"; then
+    install -d -o "$U" -g "$G" -m 755 "$W/Themes"
+    install -o "$U" -g "$G" -m 644 "$SRC/$T" "$W/Themes/$T"
+    install -o "$U" -g "$G" -m 644 /dev/null "$W/Themes/.$N.by-teamkit-installer"
+    CHANGED=1
+    echo "Copied theme $T"
+  fi
+done
+
+if [ -f "$SRC/fr.json" ] && ! cmp -s "$SRC/fr.json" "$W/Locale/fr.json"; then
+  install -d -o "$U" -g "$G" -m 755 "$W/Locale"
+  install -o "$U" -g "$G" -m 644 "$SRC/fr.json" "$W/Locale/fr.json"
   CHANGED=1
-  echo "Script line added to AMP.html (backup kept next to it)"
+  echo "Copied fr.json to Locale/"
 fi
 
 if [ "$CHANGED" = 1 ]; then
@@ -42,5 +85,7 @@ if [ "$CHANGED" = 1 ]; then
 else
   echo "Already installed."
 fi
-# Uninstall: restore AMP.html from the newest AMP.html.before-stats-* backup, or delete the <script> line,
-# then remove $W/Scripts/TeamKitStats.js. Remove the cron line too if you added one.
+# Uninstall: restore AMP.html from the newest AMP.html.before-stats-* backup, or delete the <script> lines,
+# then remove WebRoot/Scripts/TeamKitStats.js, TeamKitLang.js, TeamKitDisk.json, WebRoot/Locale/fr.json
+# and WebRoot/Themes/TeamKit*.css (pick another theme in ADS first).
+# Remove the cron lines too if you added them.

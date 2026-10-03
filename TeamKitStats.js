@@ -22,12 +22,12 @@
     go: ' Go', machine: 'Machine', serveur: 'Serveur', threads: ' threads · ', deRam: ' de RAM', serveurs: 'Serveurs', enJeu: ' en jeu',
     demarres: ' démarrés sur ', joueurs: 'Joueurs connectés', sur: 'sur ', places: ' places ouvertes', ram: 'RAM des serveurs', des: ' % des ',
     cpu: 'CPU cumulé', somme: 'somme des serveurs démarrés', disque: 'Disque des serveurs', limite: ' % de la limite de ', restants: ' restants',
-    instances: ' instances', maj: 'mis à jour à ', pastille: 'Disque occupé par cette instance (relevé par ADS)'
+    instances: ' instances', maj: 'mis à jour à ', pastille: 'Disque occupé par cette instance (relevé par ADS)', tuileDisque: 'Disque'
   } : {
     go: ' GB', machine: 'Machine', serveur: 'Server', threads: ' threads · ', deRam: ' RAM', serveurs: 'Servers', enJeu: ' running',
     demarres: ' started out of ', joueurs: 'Players online', sur: 'of ', places: ' open slots', ram: 'Server RAM', des: ' % of ',
     cpu: 'Total CPU', somme: 'sum of started servers', disque: 'Server disk', limite: ' % of the ', restants: ' left',
-    instances: ' instances', maj: 'updated at ', pastille: 'Disk used by this instance (reported by ADS)'
+    instances: ' instances', maj: 'updated at ', pastille: 'Disk used by this instance (reported by ADS)', tuileDisque: 'Disk'
   };
   function go(mb) { return (mb / 1024).toLocaleString(LOC, { maximumFractionDigits: mb >= 102400 ? 0 : 1 }) + T.go; }
   function metrique(i, nom) { var m = i && i.Metrics && i.Metrics[nom]; return m ? Number(m.RawValue) || 0 : 0; }
@@ -54,6 +54,9 @@
       '#' + ID + ' .tks-b{height:5px;border-radius:5px;background:rgba(255,255,255,.08);margin-top:8px;overflow:hidden}' +
       '#' + ID + ' .tks-b i{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,#00f0ff,#7b2cbf)}' +
       '#' + ID + ' .tks-b i.chaud{background:linear-gradient(90deg,#ffb020,#ff4d6d)}' +
+      '.DisplayMetric[data-metric="TkDiskUsage"]{--m:#f0b35a;--m-icone:\'hard_drive\'}' +
+      '.DisplayMetric[data-metric="TkDiskUsage"] .DisplayMetricHeader::before{content:\'hard_drive\'}' +
+      '#AMP_Core_MetricsDisplay:has(> #tk-disque-instance){grid-template-columns:none!important;grid-auto-flow:column!important;grid-auto-columns:minmax(0,1fr)!important}' +
       '.tk-disque{display:inline-block;margin-top:2px;font-size:11px;line-height:1.4;padding:1px 7px;border-radius:999px;background:rgba(0,240,255,.10);color:var(--tk-texte-2,#c4c9d6);font-variant-numeric:tabular-nums;white-space:nowrap}';
     document.head.appendChild(s);
   }
@@ -63,15 +66,79 @@
       '<div class="tks-v">' + val + '</div>' + (sous ? '<div class="tks-s">' + sous + '</div>' : '') + barre + '</div>';
   }
 
+  /** Page État d'un serveur : une jauge « Disque » à côté de CPU / Mémoire / Joueurs.
+   *  Cette page est un iframe de même origine (src = /instance/<InstanceID>) : on écrit dans son document. */
+  var TUILE = 'tk-disque-instance', disqueInstance = { id: null, mb: null, limite: 0, quand: 0 };
+  function cadreServeur() {
+    var fs = document.querySelectorAll('iframe');
+    for (var k = 0; k < fs.length; k++) {
+      var f = fs[k], m = /\/instance\/([0-9a-f-]{8,})/i.exec(f.getAttribute('src') || '');
+      if (!m || !f.offsetParent) continue;
+      try { var d = f.contentDocument; if (d && d.getElementById('AMP_Core_MetricsDisplay')) return { id: m[1].toLowerCase(), doc: d }; } catch (e) {}
+    }
+    return null;
+  }
+  function styleCadre(doc) {
+    if (doc.getElementById(TUILE + '-css')) return;
+    var s = doc.createElement('style'); s.id = TUILE + '-css';
+    s.textContent = '.DisplayMetric[data-metric="TkDiskUsage"]{--m:#f0b35a;--m-icone:\'hard_drive\'}' +
+      '.DisplayMetric[data-metric="TkDiskUsage"] .DisplayMetricHeader::before{content:\'hard_drive\'}' +
+      '#AMP_Core_MetricsDisplay:has(> #' + TUILE + '){grid-template-columns:none!important;grid-auto-flow:column!important;grid-auto-columns:minmax(0,1fr)!important}';
+    (doc.head || doc.documentElement).appendChild(s);
+  }
+  async function tuileInstance() {
+    var c = cadreServeur();
+    if (!c) return;
+    var doc = c.doc, bloc = doc.getElementById('AMP_Core_MetricsDisplay'), t = doc.getElementById(TUILE);
+    if (!bloc.offsetParent) { if (t) t.remove(); return; }
+    if (disqueInstance.id !== c.id || Date.now() - disqueInstance.quand > 15000) {
+      disqueInstance.quand = Date.now(); disqueInstance.id = c.id;
+      var r = await API.ADSModule.GetInstancesAsync();
+      var trouve = null;
+      ((r && r.result) || r || []).forEach(function (x) { (x.AvailableInstances || []).forEach(function (i) { if (String(i.InstanceID || '').toLowerCase() === c.id) trouve = i; }); });
+      disqueInstance.mb = trouve ? Number(trouve.DiskUsageMB) || 0 : null;
+      // limite du stockage : peut être refusée à un compte non admin, le rond reste alors vide
+      try {
+        var lim = 0, rs = API.ADSModule.GetDatastoresAsync ? await API.ADSModule.GetDatastoresAsync() : null;
+        ((rs && rs.result) || rs || []).forEach(function (d) { lim += Number(d.SoftLimitMB) || 0; });
+        disqueInstance.limite = lim;
+      } catch (e) { disqueInstance.limite = 0; }
+    }
+    if (disqueInstance.mb == null) { if (t) t.remove(); return; }
+    styleCadre(doc);
+    if (!t || !t.isConnected) {
+      var modele = bloc.querySelector('.DisplayMetric[data-metric="CPUUsage"]') || bloc.querySelector('.DisplayMetric');
+      if (!modele) return;
+      t = modele.cloneNode(true);
+      t.id = TUILE; t.setAttribute('data-metric', 'TkDiskUsage'); t.removeAttribute('data-bind'); t.removeAttribute('style');
+      t.querySelectorAll('[data-bind]').forEach(function (x) { x.removeAttribute('data-bind'); });
+      var g = t.querySelector('.DisplayMetricGraph'); if (g) g.remove();
+      var ref = bloc.querySelector('.DisplayMetric[data-metric="ActiveUsers"]');
+      bloc.insertBefore(t, ref ? ref.nextSibling : null);
+    }
+    var h = t.querySelector('.DisplayMetricHeader');
+    var txt = h ? [].filter.call(h.children, function (x) { return x.tagName === 'DIV' && !x.classList.contains('circleChart'); }) : [];
+    if (txt[0]) txt[0].textContent = T.tuileDisque;
+    var lim = disqueInstance.limite, part = lim ? Math.max(0, Math.min(1, disqueInstance.mb / lim)) : 0;
+    if (txt[1]) txt[1].textContent = lim ? go(disqueInstance.mb).replace(T.go, '') + ' / ' + go(lim) : go(disqueInstance.mb);
+    var v = t.querySelector('circle.value');
+    if (v) {
+      var longueur = parseFloat(doc.defaultView.getComputedStyle(v).strokeDasharray) || 402;
+      v.style.strokeDashoffset = (longueur * (1 - part)).toFixed(1) + 'px';
+    }
+    t.title = T.pastille + (lim ? ' · ' + Math.round(part * 100) + T.limite + go(lim) : '');
+  }
+
   async function rafraichir() {
     try {
       // API est un « const » d'API.js : il existe dans la page mais PAS sur window (window.API = undefined)
       // pastilles 💾 : pour TOUS (chacun voit le disque de ses serveurs) ; barre globale : admins seulement
       // interrupteur par navigateur : localStorage.tkStatsOff = '1' masque la barre et les pastilles (captures, préférence)
       var off = false; try { off = localStorage.getItem('tkStatsOff') === '1'; } catch (e) {}
-      if (off) { var b0 = document.getElementById(ID); if (b0) b0.remove(); document.querySelectorAll('.tk-disque').forEach(function (x) { x.remove(); }); return; }
+      if (off) { var b0 = document.getElementById(ID); if (b0) b0.remove(); document.querySelectorAll('.tk-disque').forEach(function (x) { x.remove(); }); var c0 = cadreServeur(); var t0 = c0 && c0.doc.getElementById(TUILE); if (t0) t0.remove(); return; }
       if (typeof API === 'undefined' || !API.ADSModule || !API.ADSModule.GetInstancesAsync) return;
       var admin = estAdmin();
+      try { await tuileInstance(); } catch (e) {}
       var a = ancre();
       var barre = document.getElementById(ID);
       if (!a) { if (barre) barre.remove(); return; }

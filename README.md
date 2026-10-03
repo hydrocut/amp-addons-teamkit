@@ -223,6 +223,8 @@ removed by an update: keep a copy and put them back if the theme switches to the
 
 - **An AMP update rewrites `AMP.html`**: the bar disappears (nothing breaks). Run `install-stats.sh` again, or use the cron line above.
 - RAM and CPU are the **sum of the instances**, not a measure of the whole machine (the OS and Docker are not counted).
+  AMP reports each instance's CPU in % of what it is given (its CPU limit, or the whole machine without a limit), so the
+  bar converts each one into threads used and shows the real share of the machine: it can never go over 100 %.
 - ADS does not report the free space of the disk, only the datastore usage and its soft limit.
 - Disk figures come from ADS (`DiskUsageMB`), which measures them now and then: a few minutes of delay is normal.
 - Before contacting CubeCoders support about the web interface, uninstall it or mention it.

@@ -224,6 +224,8 @@ de `WebRoot/Themes/` : en garder une copie et les remettre si le thème repasse 
 
 - **Une mise à jour d'AMP réécrit `AMP.html`** : la barre disparaît, rien ne casse. Relancer `install-stats.sh`, ou la ligne cron ci-dessus.
 - La RAM et le CPU sont la **somme des instances**, pas la mesure de la machine entière.
+  AMP donne le CPU de chaque instance en % de ce qui lui est alloué (sa limite de CPU, ou toute la machine sans limite) :
+  la barre convertit chacune en threads utilisés et affiche la vraie part de la machine, qui ne dépasse jamais 100 %.
 - ADS ne donne pas l'espace libre du disque, seulement l'occupation du stockage et sa limite.
 - Les chiffres de disque viennent d'ADS (`DiskUsageMB`), qui les mesure de temps en temps : quelques minutes de retard sont normales.
 - Avant de contacter le support de CubeCoders pour un souci d'interface, désinstaller la barre ou la signaler.

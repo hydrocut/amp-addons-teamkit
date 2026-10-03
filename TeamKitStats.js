@@ -27,20 +27,20 @@
   function majLangue() {
     var v = null; try { v = localStorage.getItem('tkLang'); } catch (e) {}
     FR = v ? v === 'fr' : /^fr/i.test(navigator.language || '');
-    LOC = FR ? 'fr-FR' : undefined;
+    LOC = FR ? 'fr-FR' : 'en-US';   // « 3,5 » en français, « 3.5 » en anglais, quelle que soit la langue du navigateur
     T = FR ? TFR : TEN;
   }
   var TFR = {
     go: ' Go', machine: 'Machine', serveur: 'Serveur', threads: ' threads · ', deRam: ' de RAM', serveurs: 'Serveurs', enJeu: ' en jeu',
     demarres: ' démarrés sur ', joueurs: 'Joueurs connectés', sur: 'sur ', places: ' places ouvertes', ram: 'RAM des serveurs', des: ' % des ',
-    cpu: 'CPU cumulé', somme: 'somme des serveurs démarrés', disque: 'Disque des serveurs', limite: ' % de la limite de ', restants: ' restants',
+    cpu: 'CPU des serveurs', somme: 'somme des serveurs démarrés', threadsSur: ' threads sur ', threadsFin: ' de la machine', disque: 'Disque des serveurs', limite: ' % de la limite de ', restants: ' restants',
     instances: ' instances', maj: 'mis à jour à ', pastille: 'Disque occupé par cette instance (relevé par ADS)', tuileDisque: 'Disque',
     tuileTous: 'Disque (tous)', deSaLimite: ' % de la limite de ce serveur', tous: 'Tous les serveurs de la machine', auDela: ' au-delà de leur limite'
   };
   var TEN = {
     go: ' GB', machine: 'Machine', serveur: 'Server', threads: ' threads · ', deRam: ' RAM', serveurs: 'Servers', enJeu: ' running',
     demarres: ' started out of ', joueurs: 'Players online', sur: 'of ', places: ' open slots', ram: 'Server RAM', des: ' % of ',
-    cpu: 'Total CPU', somme: 'sum of started servers', disque: 'Server disk', limite: ' % of the ', restants: ' left',
+    cpu: 'Server CPU', somme: 'sum of started servers', threadsSur: ' of ', threadsFin: ' threads of the machine', disque: 'Server disk', limite: ' % of the ', restants: ' left',
     instances: ' instances', maj: 'updated at ', pastille: 'Disk used by this instance (reported by ADS)', tuileDisque: 'Disk',
     tuileTous: 'Disk (all)', deSaLimite: ' % of this server limit', tous: 'All servers of the machine', auDela: ' over their limit'
   };
@@ -215,7 +215,8 @@
       cibles.forEach(function (c) {
         var p = c.Platform || {};
         ramMachine += Number(p.InstalledRAMMB) || 0;
-        threads += Number(p.CPUInfo && p.CPUInfo.TotalThreads) || 0;
+        var tc = Number(p.CPUInfo && p.CPUInfo.TotalThreads) || 0;
+        threads += tc;
         if (!modele && p.CPUInfo) modele = String(p.CPUInfo.ModelName || '').replace(/ \d+-Core Processor/, '');
         (c.AvailableInstances || []).forEach(function (i) {
           if (i.Module === 'ADS' || i.InstanceName === 'ADS01') return;
@@ -226,7 +227,10 @@
           if (Number(i.AppState) === 20) enJeu++;
           joueurs += metrique(i, 'Active Users'); places += maxi(i, 'Active Users');
           ram += metrique(i, 'Memory Usage');
-          cpu += metrique(i, 'CPU Usage');
+          // AMP donne le CPU d'une instance en % de ce qui lui est alloué (ContainerCPUs cœurs), ou de toute la machine si
+          // elle n'a pas de limite : additionner ces % n'a pas de sens. On compte des threads occupés (vérifié le 3 oct. 2026
+          // face à docker stats : 3,5 threads selon AMP contre 3,1 cœurs mesurés).
+          cpu += metrique(i, 'CPU Usage') / 100 * ((Number(i.ContainerCPUs) || 0) || tc);
         });
       });
       var ds = { usage: 0, libre: null, limite: 0 };
@@ -255,7 +259,9 @@
         tuile('play_circle', T.serveurs, enJeu + T.enJeu, demarrees + T.demarres + total, total ? Math.round(enJeu / total * 100) : null) +
         tuile('group', T.joueurs, String(joueurs), places ? T.sur + places + T.places : '', places ? Math.round(joueurs / places * 100) : null) +
         tuile('memory_alt', T.ram, go(ram), ramMachine ? pctRam + T.des + go(ramMachine) : '', pctRam) +
-        tuile('memory', T.cpu, Math.round(cpu) + ' %', T.somme, Math.round(cpu)) +
+        tuile('memory', T.cpu, (threads ? Math.round(cpu / threads * 100) : 0) + ' %',
+          threads ? '≈ ' + cpu.toLocaleString(LOC, { maximumFractionDigits: 1 }) + T.threadsSur + threads + T.threadsFin : T.somme,
+          threads ? Math.round(cpu / threads * 100) : null) +
         tuile('hard_drive', T.disque, go(occupe), sousDisque, pctDisque);
       style();
       if (admin) {

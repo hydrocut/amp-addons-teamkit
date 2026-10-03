@@ -25,6 +25,9 @@
   var dico = null, actif = false, actuelle = 'en';
   var vus = new WeakSet(), docs = [];
   var origTexte = new WeakMap(), origAttr = new WeakMap();   // l'anglais d'origine de ce qu'on a traduit
+  // si le moteur d'AMP a traduit la page à son chargement (réglage « fr » laissé par une ancienne version), on sait
+  // quand même revenir à l'anglais : le dictionnaire à l'envers (français → anglais)
+  var moteurAmp = false, inverse = null;
 
   function langue() {
     var v = null; try { v = localStorage.getItem(CLE); } catch (e) {}
@@ -88,6 +91,10 @@
     while ((n = w.nextNode())) {
       if (n.nodeType === 3) {
         if (origTexte.has(n)) { n.nodeValue = origTexte.get(n); origTexte.delete(n); }
+        else if (inverse && !saute(n.parentElement)) {
+          var m = /^(\s*)(.*?)(\s*)$/.exec(n.nodeValue), en = m && inverse[m[2]];
+          if (en) n.nodeValue = m[1] + en + m[3];
+        }
       } else if (origAttr.has(n)) {
         var o = origAttr.get(n);
         Object.keys(o).forEach(function (a) { n.setAttribute(a, o[a]); });
@@ -183,7 +190,10 @@
   async function demarrer() {
     // AMP.js lance son propre moteur au démarrage s'il trouve localStorage.AMPLocale : on le laisse éteint (ce qu'il traduit
     // ne se défait qu'en rechargeant). Une ancienne version de ce script y mettait « fr » : on le vide, sans recharger.
-    try { if (localStorage.getItem('AMPLocale')) localStorage.setItem('AMPLocale', ''); } catch (e) {}
+    try {
+      moteurAmp = !!localStorage.getItem('AMPLocale') || /[?&]lang=fr/.test(location.search);
+      if (localStorage.getItem('AMPLocale')) localStorage.setItem('AMPLocale', '');
+    } catch (e) {}
     var data = null;
     try {
       var rep = await fetch(DICO_URL, { cache: 'no-cache', credentials: 'same-origin' });
@@ -191,6 +201,7 @@
     } catch (e) { data = null; }
     if (!data || !data.Strings) return; // pas de dictionnaire installé : on ne montre même pas le bouton
     dico = data.Strings;
+    if (moteurAmp) { inverse = {}; Object.keys(dico).forEach(function (k) { if (!(dico[k] in inverse)) inverse[dico[k]] = k; }); }
     bouton();
     suivre(document);
     setInterval(cadres, 1500);

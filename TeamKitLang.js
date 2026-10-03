@@ -42,9 +42,13 @@
   function saute(el) {
     try { return !!(el && el.closest && el.closest(SAUTER)); } catch (e) { return false; }
   }
+  // durées écrites par AMP (« 0 mins », « 1.5 hours ») : unité française, virgule décimale
+  var UNITES = { min: 'min', mins: 'min', minute: 'min', minutes: 'min', hour: 'h', hours: 'h', hr: 'h', hrs: 'h', day: 'j', days: 'j', sec: 's', secs: 's', second: 's', seconds: 's' };
   // même découpe que Locale.js d'AMP : espaces autour gardés, le texte doit commencer par une lettre
   function traduit(txt) {
     if (!txt || !/[a-zA-Z]\w/.test(txt)) return null;
+    var du = /^(\s*)(\d+(?:\.\d+)?)\s*(mins?|minutes?|hours?|hrs?|days?|secs?|seconds?)(\s*)$/i.exec(txt);
+    if (du) return du[1] + du[2].replace('.', ',') + ' ' + UNITES[du[3].toLowerCase()] + du[4];
     var m = /^(\s*)([a-zA-Z ].*?)(\s*)$/.exec(txt);
     if (!m) return null;
     // AMP écrit certains libellés avec des espaces insécables (« Java and Memory ») : on essaie aussi avec des espaces simples
@@ -56,8 +60,14 @@
     }
     return t ? m[1] + t + m[3] : null;
   }
+  // AMP colle l'unité au maximum d'une jauge (« 20 / 20TPS », « 512 / 1024MB ») : on remet l'espace, dans les deux
+  // langues (ce n'est pas une traduction, juste une coquille d'AMP ; rien à restaurer en repassant à l'anglais)
+  var COLLE = /^(\s*\d[\d.,]* \/ \d[\d.,]*)([A-Za-z][A-Za-z\/]*\s*)$/;
   function noeudTexte(n) {
-    if (!actif || saute(n.parentElement)) return;
+    if (saute(n.parentElement)) return;
+    var c = COLLE.exec(n.nodeValue);
+    if (c) n.nodeValue = c[1] + ' ' + c[2];
+    if (!actif) return;
     var t = traduit(n.nodeValue);
     if (t != null && t !== n.nodeValue) { origTexte.set(n, n.nodeValue); n.nodeValue = t; }
   }
@@ -76,7 +86,7 @@
     });
   }
   function parcourir(racine) {
-    if (!racine || !actif) return;
+    if (!racine) return;
     if (racine.nodeType === 3) { noeudTexte(racine); return; }
     if (racine.nodeType !== 1 && racine.nodeType !== 9 && racine.nodeType !== 11) return;
     if (racine.nodeType === 1) { if (saute(racine)) return; attributs(racine); }
@@ -111,10 +121,9 @@
     if (!doc || !doc.body || vus.has(doc)) return;
     vus.add(doc); docs.push(doc);
     try { doc.documentElement.lang = actuelle; } catch (e) {}   // le thème TeamKitHUD n'affiche ses libellés français que si lang=fr
-    if (actif) parcourir(doc.body);
+    parcourir(doc.body);   // en anglais aussi : l'espace des jauges (voir COLLE)
     var file = [], prevu = false;
     new MutationObserver(function (ms) {
-      if (!actif) return;
       ms.forEach(function (m) {
         if (m.type === 'characterData' || m.type === 'attributes') file.push(m.target);
         else m.addedNodes.forEach(function (x) { file.push(x); });

@@ -325,13 +325,14 @@ mot de passe seul dans le `password_file` (`chmod 600`).
 
 AMP 2.8 contient déjà un moteur de traduction (`Scripts/Locale.js`, dictionnaires dans `WebRoot/Locale/<iso>.json`),
 mais rien dans l'interface ne l'allume. `TeamKitLang.js` le fait, avec `fr.json`, un dictionnaire français d'environ
-3 200 phrases : les pages du panel, les réglages d'ADS, les permissions, les tâches et déclencheurs du planificateur, et la
+3 450 phrases : les pages du panel, les réglages d'ADS, les permissions, les tâches et déclencheurs du planificateur, la page **Statistiques** (noms des pays compris), et la
 **Configuration** de 22 sortes d'instances (Minecraft Java et Bedrock, Garry's Mod, Counter-Strike 1.6 et Source,
 FiveM, Barotrauma, DDNet, Teeworlds, Luanti, BeamMP, SA-MP, RimWorld, Eco, Empyrion, Euro Truck Simulator 2,
 Farming Simulator 25, Node.js, MySQL, MariaDB, PostgreSQL…).
 
 - Un navigateur réglé en français affiche le panel en français ; les autres restent en anglais.
 - Un petit bouton **FR | EN** dans la barre du haut, à côté de la recherche, permet de changer (en bas à droite sur la page de connexion) ; le choix est gardé dans ce navigateur (`localStorage.tkLang`).
+- Les durées passent en unités françaises (`0 mins` → `0 min`), et l'espace qu'AMP oublie dans les jauges (`20 / 20TPS`, `512 / 1024MB`) est remis, dans les deux langues.
 - Les pages des serveurs ouvertes depuis ADS sont traduites aussi.
 - Jamais traduits : la console, les noms de fichiers, l'éditeur de fichiers, les noms des joueurs, ce qu'on tape dans un champ.
 - Le changement se fait **sur place, sans recharger** : chaque texte traduit garde son anglais d'origine et le retrouve ;

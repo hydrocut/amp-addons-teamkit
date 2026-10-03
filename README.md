@@ -320,7 +320,7 @@ alone in the `password_file` (`chmod 600`).
 
 AMP 2.8 already contains a translation engine (`Scripts/Locale.js`, dictionaries in `WebRoot/Locale/<iso>.json`),
 but nothing in the interface turns it on. `TeamKitLang.js` does, with `fr.json`, a French dictionary of about
-3 200 phrases: the panel pages, ADS settings, permissions, scheduler tasks and triggers, and the **Configuration** of 22 kinds of
+3 450 phrases: the panel pages, ADS settings, permissions, scheduler tasks and triggers, the **Analytics** page (with country names), and the **Configuration** of 22 kinds of
 instances (Minecraft Java and Bedrock, Garry's Mod, Counter-Strike 1.6 and Source, FiveM, Barotrauma, DDNet,
 Teeworlds, Luanti, BeamMP, SA-MP, RimWorld, Eco, Empyrion, Euro Truck Simulator 2, Farming Simulator 25, Node.js,
 MySQL, MariaDB, PostgreSQL…).
@@ -328,6 +328,7 @@ MySQL, MariaDB, PostgreSQL…).
 - Browsers set to French get the panel in French; everyone else keeps English.
 - A small **FR | EN** switch in the top bar, next to the search box, changes it (bottom right on the login page); the choice is kept in that browser (`localStorage.tkLang`).
 - Instance pages opened from ADS are translated too.
+- Durations become French units (`0 mins` → `0 min`), and the missing space AMP leaves in gauges (`20 / 20TPS`, `512 / 1024MB`) is restored, in both languages.
 - Never translated: the console, file names, the file editor, player names, anything typed in a field.
 - Switching happens **in place, without reloading**: every translated text remembers its English original and gets it
   back; the stats bar redraws itself in the new language.

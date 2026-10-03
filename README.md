@@ -36,6 +36,22 @@ The stats bar works in **all four layouts** of the Instances page (the four butt
 
 *Screenshots taken on the TeamKit panel; server addresses are hidden.*
 
+## ⚠️ Disclaimer — use at your own risk
+
+These add-ons are shared **as is**, for free, by a passionate hobbyist. They work on **my own setup** (AMP 2.8.0.8, Debian 12,
+Docker instances, see *Compatibility*), but **I cannot test every AMP install, version or configuration**.
+
+- **Make a backup before installing** (at least `WebRoot/AMP.html` and your instances' important data). The installer keeps
+  a copy of `AMP.html`, but that is not a full backup.
+- **You install and run them under your own responsibility.** I am **not responsible** for any damage, data loss, downtime,
+  broken instance or any other problem on your AMP, your servers or your machine, even if it seems linked to these add-ons.
+- Nothing obliges you to use them, and you are free to read, change or remove every line: the code is open and readable.
+- The disk guard can **stop the game** of an instance when set to do so (`enforce`): test it in display mode and with
+  `--dry-run` first.
+- **Not affiliated with CubeCoders.** Before asking CubeCoders support for help, uninstall the add-ons or mention them.
+
+Legal terms: [MIT License](LICENSE) (*"THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND"*).
+
 ## Install in one command (recommended)
 
 On the machine where AMP runs (over SSH, or PuTTY from Windows), copy this line, paste it, press Enter:
@@ -327,4 +343,5 @@ type in tasks.
 
 ## Licence
 
-Free to use, copy and adapt. A mention of TeamKit is appreciated, not required. Not affiliated with CubeCoders.
+[MIT](LICENSE): free to use, copy, change and share, **provided as is, without any warranty**. A mention of TeamKit
+is appreciated, not required. Not affiliated with CubeCoders.

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""AMP disk guard - by the TeamKit community (https://www.teamkit.fr), 2026. Free to use and adapt.
+"""AMP disk guard - by the TeamKit community (https://www.teamkit.fr), 2026. MIT License: free to use and adapt,
+provided as is, WITHOUT ANY WARRANTY; you use it under your own responsibility.
 
 Reads disk-limits.json and does two things, every time it runs (cron or systemd timer, every 5 minutes):
 

@@ -36,6 +36,25 @@ La barre de stats marche dans **les quatre vues** de la page Instances (les quat
 
 *Captures prises sur le panel TeamKit ; les adresses des serveurs sont masquées.*
 
+## ⚠️ Avertissement — à tes risques et périls
+
+Ces ajouts sont partagés **tels quels**, gratuitement, par un passionné. Ils marchent sur **ma configuration à moi**
+(AMP 2.8.0.8, Debian 12, instances en Docker, voir *Compatibilité*), mais **je ne peux pas tester toutes les installations,
+versions et configurations d'AMP**.
+
+- **Fais une sauvegarde avant d'installer** (au moins `WebRoot/AMP.html` et les données importantes de tes instances).
+  L'installeur garde une copie d'`AMP.html`, mais ce n'est pas une sauvegarde complète.
+- **Tu les installes et les utilises sous ta seule responsabilité.** Je ne suis **responsable de rien** : ni casse, ni perte
+  de données, ni coupure, ni instance abîmée, ni aucun autre problème sur ton AMP, tes serveurs ou ta machine, même si cela
+  semble lié à ces ajouts.
+- Rien ne t'oblige à les utiliser, et tu es libre de lire, modifier ou retirer chaque ligne : le code est ouvert et lisible.
+- Le gardien disque peut **couper le jeu** d'une instance si tu le règles pour (`enforce`) : teste-le d'abord en mode
+  affichage et avec `--dry-run`.
+- **Sans lien avec CubeCoders.** Avant de demander de l'aide au support de CubeCoders, désinstalle les ajouts ou signale-les.
+
+Conditions légales : [licence MIT](LICENSE) (en anglais, c'est le texte officiel ; en résumé : utilisation, modification et
+partage libres, **fourni tel quel, sans aucune garantie**, l'auteur n'est responsable d'aucun dommage).
+
 ## Installer en une commande (conseillé)
 
 Sur la machine où tourne AMP (en SSH, ou avec PuTTY depuis Windows), copie cette ligne, colle-la, appuie sur Entrée :
@@ -329,4 +348,5 @@ sont des noms à recopier dans les tâches.
 
 ## Licence
 
-Libre d'utilisation, de copie et d'adaptation. Une mention de TeamKit fait plaisir, sans obligation. Sans lien avec CubeCoders.
+[MIT](LICENSE) : utilisation, copie, modification et partage libres, **fourni tel quel, sans aucune garantie**. Une
+mention de TeamKit fait plaisir, sans obligation. Sans lien avec CubeCoders.

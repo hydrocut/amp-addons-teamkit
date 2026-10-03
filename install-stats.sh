@@ -1,4 +1,5 @@
 #!/bin/sh
+# MIT License: provided as is, WITHOUT ANY WARRANTY (see LICENSE); you use it under your own responsibility.
 # Install (or repair after an AMP update) the TeamKit add-ons into an AMP ADS instance (Linux).
 #   sudo sh install-stats.sh [ADS instance name] [folder of the add-on files]
 # Defaults: ADS01, the folder of this script.

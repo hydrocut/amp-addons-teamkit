@@ -1,4 +1,5 @@
-/* AMP in French — by the TeamKit community (https://www.teamkit.fr), 2026. Free to use and adapt.
+/* AMP in French — by the TeamKit community (https://www.teamkit.fr), 2026. MIT License: free to use and adapt,
+   provided as is, WITHOUT ANY WARRANTY; you use it under your own responsibility.
 
    AMP 2.8 ships a translation engine (Scripts/Locale.js reading /Locale/<iso>.json) but nothing in the interface
    turns it on. This add-on does: when /Locale/fr.json exists, the panel is shown in French for browsers set to

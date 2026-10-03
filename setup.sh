@@ -1,4 +1,5 @@
 #!/bin/sh
+# MIT License: provided as is, WITHOUT ANY WARRANTY (see LICENSE); you use it under your own responsibility.
 # AMP add-ons by TeamKit — interactive installer / updater / uninstaller (Linux).
 #
 #   curl -fsSL https://raw.githubusercontent.com/hydrocut/amp-addons-teamkit/main/setup.sh -o /tmp/amp-addons-setup.sh && sudo sh /tmp/amp-addons-setup.sh
@@ -258,9 +259,22 @@ uninstall_all() {
   ok "C'est fait. Recharge la page d'AMP (Ctrl+F5). Les fichiers restent dans $DIR." "Done. Reload the AMP page (Ctrl+F5). Files stay in $DIR."
 }
 
+disclaimer() {
+  title "Avertissement" "Disclaimer"
+  say "Ces ajouts sont fournis tels quels, gratuitement, SANS AUCUNE GARANTIE (licence MIT)." \
+      "These add-ons are provided as is, for free, WITHOUT ANY WARRANTY (MIT License)."
+  say "Ils marchent sur la configuration de l'auteur, pas forcément sur la tienne. Fais une sauvegarde avant." \
+      "They work on the author's setup, not necessarily on yours. Make a backup first."
+  say "Tu les installes sous ta seule responsabilité : l'auteur n'est responsable d'aucune casse ni perte." \
+      "You install them under your own responsibility: the author is not liable for any damage or loss."
+  say "Sans lien avec CubeCoders." "Not affiliated with CubeCoders."
+  ask_yn "J'ai compris et j'accepte. Continuer ?" "I understand and accept. Continue?" n || { say "Rien n'a été modifié." "Nothing was changed."; exit 0; }
+}
+
 main() {
   printf '\n\033[1mAMP add-ons by TeamKit\033[0m — %s\n' "$REPO"
   choose_language
+  disclaimer
   checks
   find_ads
   state

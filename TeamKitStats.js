@@ -1,4 +1,5 @@
-/* AMP Instances stats bar — by the TeamKit community (https://www.teamkit.fr), 2026. Free to use and adapt.
+/* AMP Instances stats bar — by the TeamKit community (https://www.teamkit.fr), 2026. MIT License: free to use and adapt,
+   provided as is, WITHOUT ANY WARRANTY; you use it under your own responsibility.
 
    Adds a row of tiles above the instance groups on the ADS Instances page: machine, servers running,
    players online, total RAM, total CPU and datastore usage (with its soft limit), plus a small

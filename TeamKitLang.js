@@ -39,6 +39,11 @@
     if (!m) return null;
     // AMP écrit certains libellés avec des espaces insécables (« Java and Memory ») : on essaie aussi avec des espaces simples
     var t = dico[m[2]] || (m[2].indexOf('\u00a0') >= 0 ? dico[m[2].replace(/\u00a0/g, ' ')] : null);
+    if (!t) {
+      // \u00ab Libell\u00e9: valeur \u00bb qui change sans cesse (\u00ab Running Uptime: 0:00:01:39 \u00bb) : on traduit le libell\u00e9, la valeur reste
+      var lv = /^([A-Za-z][^:]{1,40}?):\s+(\S.*)$/.exec(m[2]);
+      if (lv && dico[lv[1]]) t = dico[lv[1]] + '\u00a0: ' + lv[2];
+    }
     return t ? m[1] + t + m[3] : null;
   }
   function noeudTexte(n) {

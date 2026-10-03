@@ -142,34 +142,36 @@
     actuelle = l;
     if (choisi) { try { localStorage.setItem(CLE, l); } catch (e) {} }   // seul un clic enregistre un choix
     document.documentElement.lang = l;
-    var b = document.getElementById('tk-lang');
-    if (b) {
-      b.setAttribute('aria-label', l === 'fr' ? 'Langue du panel' : 'Panel language');
-      [].forEach.call(b.querySelectorAll('button'), function (x) { x.setAttribute('aria-pressed', String(x.dataset.l === l)); });
-    }
     actif = l === 'fr';
     cadres();
     docs.forEach(function (d) { try { d.documentElement.lang = l; } catch (e) {} if (actif) parcourir(d.body); else restaurer(d); });
+    majBoutons();
     try { window.dispatchEvent(new CustomEvent('tk-lang', { detail: l })); } catch (e) {}
   }
 
-  function bouton() {
-    if (document.getElementById('tk-lang')) return;
-    var s = document.createElement('style');
-    s.textContent = '#tk-lang{position:fixed;right:12px;bottom:12px;z-index:99999;display:flex;gap:2px;padding:3px;border-radius:999px;' +
-      'background:var(--tk-carte,rgba(22,26,36,.92));border:1px solid var(--tk-bord,#262b38);font:600 11px/1 Inter,system-ui,sans-serif;opacity:.75}' +
-      '#tk-lang:hover,#tk-lang:focus-within{opacity:1}' +
-      '#tk-lang button{all:unset;cursor:pointer;padding:5px 9px;border-radius:999px;color:var(--tk-texte-3,#8b92a5);letter-spacing:.06em}' +
-      '#tk-lang button[aria-pressed="true"]{background:rgba(0,240,255,.16);color:var(--tk-texte,#e3e6ee)}' +
-      '#tk-lang button:focus-visible{outline:2px solid #00f0ff;outline-offset:1px}' +
-      // dans la barre du haut d'AMP, juste avant la recherche, centré en hauteur, au-dessus du titre de la page
-      '#tk-lang.tk-lang-barre{position:static;align-self:center;margin:0 0 0 16px;opacity:1;flex:none}' +
-      '#tk-lang.tk-lang-barre button{position:relative;z-index:60}';
-    document.head.appendChild(s);
-    var b = document.createElement('div');
+  var CSS = '#tk-lang{position:fixed;right:12px;bottom:12px;z-index:99999;display:flex;gap:2px;padding:3px;border-radius:999px;' +
+    'background:var(--tk-carte,rgba(22,26,36,.92));border:1px solid var(--tk-bord,#262b38);font:600 11px/1 Inter,system-ui,sans-serif;opacity:.75}' +
+    '#tk-lang:hover,#tk-lang:focus-within{opacity:1}' +
+    '#tk-lang button{all:unset;cursor:pointer;padding:5px 9px;border-radius:999px;color:var(--tk-texte-3,#8b92a5);letter-spacing:.06em}' +
+    '#tk-lang button[aria-pressed="true"]{background:rgba(0,240,255,.16);color:var(--tk-texte,#e3e6ee)}' +
+    '#tk-lang button:focus-visible{outline:2px solid #00f0ff;outline-offset:1px}' +
+    // dans la barre du haut d'AMP, juste avant la recherche, centré en hauteur, au-dessus du titre de la page
+    '#tk-lang.tk-lang-barre{position:static;align-self:center;margin:0 0 0 16px;opacity:1;flex:none}' +
+    '#tk-lang.tk-lang-barre button{position:relative;z-index:60}';
+
+  /** Le bouton FR | EN d'un document : la page principale, et la page d'un serveur, ouverte dans un cadre qui couvre
+   *  toute la fenêtre (et donc la barre de la page principale). Tous pilotent le même traducteur. */
+  function boutonDe(doc) {
+    var b = doc.getElementById('tk-lang');
+    if (b) return b;
+    if (!doc.getElementById('tk-lang-css')) {
+      var s = doc.createElement('style'); s.id = 'tk-lang-css'; s.textContent = CSS;
+      (doc.head || doc.documentElement).appendChild(s);
+    }
+    b = doc.createElement('div');
     b.id = 'tk-lang'; b.className = 'tk-lang'; b.setAttribute('role', 'group');
     ['fr', 'en'].forEach(function (l) {
-      var x = document.createElement('button');
+      var x = doc.createElement('button');
       x.type = 'button'; x.textContent = l.toUpperCase(); x.dataset.l = l;
       x.title = l === 'fr' ? 'Afficher le panel en français' : 'Show the panel in English';
       x.addEventListener('click', function (e) {
@@ -178,17 +180,34 @@
       });
       b.appendChild(x);
     });
-    document.body.appendChild(b);
-    placer();
-    setInterval(placer, 1500); // la barre du haut n'apparaît qu'une fois connecté
+    doc.body.appendChild(b);
+    majBoutons();
+    return b;
   }
-  /** Dans la barre du haut d'AMP (avant la recherche) quand elle est affichée, sinon en bas à droite (page de connexion). */
+  function majBoutons() {
+    [document].concat(docs).forEach(function (d) {
+      var b = d && d.getElementById && d.getElementById('tk-lang'); if (!b) return;
+      b.setAttribute('aria-label', actuelle === 'fr' ? 'Langue du panel' : 'Panel language');
+      [].forEach.call(b.querySelectorAll('button'), function (x) { x.setAttribute('aria-pressed', String(x.dataset.l === actuelle)); });
+    });
+  }
+  function bouton() {
+    boutonDe(document);
+    placer();
+    setInterval(placer, 1500); // la barre du haut n'apparaît qu'une fois connecté, les pages de serveur vont et viennent
+  }
+  /** Dans la barre du haut (avant la recherche) de chaque document qui en affiche une ; sinon en bas à droite
+   *  (page de connexion). Les pages de serveur ont leur propre barre : elles reçoivent leur propre bouton. */
   function placer() {
-    var b = document.getElementById('tk-lang'); if (!b) return;
-    var barre = document.getElementById('topSearchBox');
-    var visible = !!(barre && barre.parentElement && barre.offsetParent);
-    if (visible && b.nextElementSibling !== barre) { b.classList.add('tk-lang-barre'); barre.parentElement.insertBefore(b, barre); }
-    else if (!visible && b.parentElement !== document.body) { b.classList.remove('tk-lang-barre'); document.body.appendChild(b); }
+    [document].concat(docs).forEach(function (d) {
+      if (!d || !d.body) return;
+      var barre = d.getElementById('topSearchBox');
+      var visible = !!(barre && barre.parentElement && barre.offsetParent);
+      if (d !== document && !visible) return;              // page de serveur sans barre : rien à poser
+      var b = boutonDe(d);
+      if (visible && b.nextElementSibling !== barre) { b.classList.add('tk-lang-barre'); barre.parentElement.insertBefore(b, barre); }
+      else if (!visible && b.parentElement !== d.body) { b.classList.remove('tk-lang-barre'); d.body.appendChild(b); }
+    });
   }
 
   async function demarrer() {

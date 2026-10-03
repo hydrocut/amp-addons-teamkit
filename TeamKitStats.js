@@ -13,6 +13,9 @@
    An AMP update rewrites AMP.html: re-run install-stats.sh afterwards. See README.md. */
 (function () {
   'use strict';
+  // Dans le cadre d'une page de serveur (même origine), ADS charge aussi ce script : on laisse la page principale tout
+  // piloter (elle traduit et suit déjà le cadre), sinon deux copies se contredisent.
+  try { if (window.self !== window.top && window.parent.document) return; } catch (e) { /* cadre d'une autre origine : on tourne */ }
   var ID = 'tk-stats-ads', minuterie = null, derniere = 0;
 
   function estAdmin() {

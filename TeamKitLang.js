@@ -16,6 +16,9 @@
    localStorage.tkLang = 'fr' | 'en' (unset = browser language). See README.md. */
 (function () {
   'use strict';
+  // Dans le cadre d'une page de serveur (même origine), ADS charge aussi ce script : on laisse la page principale tout
+  // piloter (elle traduit et suit déjà le cadre), sinon deux copies se contredisent.
+  try { if (window.self !== window.top && window.parent.document) return; } catch (e) { /* cadre d'une autre origine : on tourne */ }
   var CLE = 'tkLang', DICO_URL = '/Locale/fr.json';
   // zones jamais traduites : sorties du jeu, fichiers, saisies, noms choisis par les gens
   var ZONES = '#consoleArea,#consoleUsers,#fileManagerList,#editorFilename,.fmPathSegment,#backupsList tbody,.ServerEntry h3,.tk-lang,' +
@@ -107,6 +110,7 @@
   function suivre(doc) {
     if (!doc || !doc.body || vus.has(doc)) return;
     vus.add(doc); docs.push(doc);
+    try { doc.documentElement.lang = actuelle; } catch (e) {}   // le thème TeamKitHUD n'affiche ses libellés français que si lang=fr
     if (actif) parcourir(doc.body);
     var file = [], prevu = false;
     new MutationObserver(function (ms) {
@@ -145,7 +149,7 @@
     }
     actif = l === 'fr';
     cadres();
-    docs.forEach(function (d) { if (actif) parcourir(d.body); else restaurer(d); });
+    docs.forEach(function (d) { try { d.documentElement.lang = l; } catch (e) {} if (actif) parcourir(d.body); else restaurer(d); });
     try { window.dispatchEvent(new CustomEvent('tk-lang', { detail: l })); } catch (e) {}
   }
 

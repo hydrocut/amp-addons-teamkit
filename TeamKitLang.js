@@ -122,20 +122,16 @@
     vus.add(doc); docs.push(doc);
     try { doc.documentElement.lang = actuelle; } catch (e) {}   // le thème TeamKitHUD n'affiche ses libellés français que si lang=fr
     parcourir(doc.body);   // en anglais aussi : l'espace des jauges (voir COLLE)
-    var file = [], prevu = false;
+    // Traduit TOUT DE SUITE, dans l'observateur : il passe avant que le navigateur ne dessine. Avec une attente (60 ms
+    // avant la v16), un texte qu'AMP réécrit chaque seconde (« Running Uptime: 0:00:05:38 ») s'affichait en anglais un
+    // instant à chaque mise à jour : il clignotait. Ce qu'on réécrit nous-mêmes revient ici sans boucler (déjà traduit).
     new MutationObserver(function (ms) {
+      var lot = new Set();
       ms.forEach(function (m) {
-        if (m.type === 'characterData' || m.type === 'attributes') file.push(m.target);
-        else m.addedNodes.forEach(function (x) { file.push(x); });
+        if (m.type === 'characterData' || m.type === 'attributes') lot.add(m.target);
+        else m.addedNodes.forEach(function (x) { lot.add(x); });
       });
-      if (prevu) return;
-      prevu = true;
-      // une minuterie et pas requestAnimationFrame : Chrome met ce dernier en pause dans un onglet en arrière-plan
-      setTimeout(function () {
-        prevu = false;
-        var lot = file; file = [];
-        lot.forEach(function (x) { if (x.nodeType === 1 && !x.isConnected) return; parcourir(x); });
-      }, 60);
+      lot.forEach(function (x) { if (x.nodeType === 1 && !x.isConnected) return; parcourir(x); });
     }).observe(doc.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ATTRS });
   }
   function cadres() {

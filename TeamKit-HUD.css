@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Orbitron:wght@600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
 
-/* TeamKit HUD theme for AMP (v1.1, 2026)
+/* TeamKit HUD theme for AMP (v1.2, 2026)
    The TeamKit theme plus a game-HUD layout of the instance Status page: three large glowing gauges
    (CPU, memory, players) and big round start / stop / restart buttons. Made by the TeamKit community. */
 
@@ -662,16 +662,12 @@ p.inlineWarning {
 .InstanceList .ServerEntry .ServerEntryTop .ServerEntryStatus {
   font-weight: 600;
   letter-spacing: 0;
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
 }
 
 .InstanceList .ServerEntry .ServerEntryMetrics .ServerEntryMetric {
-  background-color: rgba(10, 10, 15, 0.72);
+  background-color: rgba(10, 10, 15, 0.8);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 10px;
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
 }
 .InstanceList .ServerEntry .ServerEntryMetrics .ServerEntryMetric .mat-icon {
   color: var(--tk-cyan-texte);
@@ -688,8 +684,6 @@ p.inlineWarning {
 .InstanceList .ServerEntry .ServerEntryActions {
   border-radius: 10px;
   border: 1px solid var(--tk-bord);
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
 }
 .InstanceList .ServerEntry .ServerEntryActions .iconButton {
   background-color: rgba(10, 10, 15, 0.75);
@@ -1121,7 +1115,7 @@ table.rowSelect tbody tr:active {
 .DisplayMetric[data-metric="MemoryUsage"] { --m: var(--m-ram); --m-icone: 'memory'; }
 .DisplayMetric[data-metric="ActiveUsers"] { --m: var(--m-joueurs); --m-icone: 'groups'; }
 .DisplayMetric { --m: var(--tk-cyan-texte); }
-.DisplayMetric .circleChart svg circle.value { stroke: var(--m) !important; filter: drop-shadow(0 0 5px color-mix(in srgb, var(--m) 55%, transparent)); }
+.DisplayMetric .circleChart svg circle.value { stroke: var(--m) !important; }
 .DisplayMetric .circleChart svg circle { stroke-width: 9; }
 
 /* Icône de la jauge (police d'icônes d'AMP, déjà chargée) */
@@ -1166,6 +1160,10 @@ table.rowSelect tbody tr:active {
 .listenPort > span:first-child { color: var(--tk-texte-3); }
 .ProtocolName { color: var(--tk-texte-3); font-family: var(--tk-mono); font-size: 12px; }
 .listenPort .AppStatus { text-shadow: none; font-weight: 600; font-size: 13px; }
+/* The main address: big, monospaced, easy to read and copy */
+#statusActions > div:nth-child(2) div.listenPort:first-of-type > span:first-child { display: none; }
+#statusActions > div:nth-child(2) div.listenPort:first-of-type > span:last-child { font-family: var(--tk-mono); font-size: 20px; color: var(--tk-texte); padding-left: 0; }
+#statusActions > div:nth-child(2) div.listenPort:first-of-type a { font-size: 18px; }
 /* G · HUD : comme l'écran d'un jeu — trois grands cadrans centrés et lumineux, gros boutons ronds dessous. */
 #tab_status:not([style*="none"]) {
   display: grid !important; gap: 18px; align-content: start;
@@ -1175,7 +1173,7 @@ table.rowSelect tbody tr:active {
 #statusActions { display: contents !important; }
 .metricsHeader { grid-area: tete; margin: 0; justify-content: center; gap: 16px; }
 .metricsHeader .grow { display: none; }
-#AMP_Core_MetricsDisplay { grid-area: jauges; margin: 0 !important; grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 18px !important; }
+#AMP_Core_MetricsDisplay { grid-area: jauges; margin: 0 !important; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)) !important; gap: 18px !important; }
 .DisplayMetric {
   height: 250px; flex-direction: column; align-items: center; justify-content: center; position: relative;
   background: radial-gradient(circle at 50% 45%, color-mix(in srgb, var(--m) 16%, transparent), transparent 65%), var(--tk-carte);
@@ -1205,3 +1203,45 @@ table.rowSelect tbody tr:active {
 #AMP_Core_ServerStatus button.slideIcon:hover { transform: scale(1.06); }
 #statusActions > div:nth-child(2) { grid-area: adresse; margin: 0; }
 #statusActions > div:nth-child(3) { grid-area: ports; margin: 0; min-width: 0 !important; }
+
+/* ═══════ Narrow screens and phones ═══════
+   Long connection links wrap inside their card instead of overflowing it; the address and ports stack under 1100 px;
+   two gauges per row and smaller round buttons on phones. */
+.listenPort .AppStatus { white-space: nowrap; }
+#statusActions > div:nth-child(2) div.listenPort:first-of-type > span:last-child { white-space: nowrap; }
+#statusActions > div:nth-child(2) div.listenPort:first-of-type a { margin-left: 6px; }
+#statusActions > div:nth-child(2) .listenPort a { overflow-wrap: anywhere; word-break: break-all; }
+#statusActions > div:nth-child(2), #statusActions > div:nth-child(3) { min-width: 0; }
+@media screen and (max-width: 1100px) {
+  #tab_status:not([style*="none"]) { grid-template-columns: minmax(0, 1fr); grid-template-areas: "tete" "jauges" "cmd" "adresse" "ports"; }
+}
+@media screen and (max-width: 660px) {
+  #tab_status:not([style*="none"]) { gap: 12px; }
+  #AMP_Core_MetricsDisplay { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 10px !important; }
+  .DisplayMetric { height: auto; min-height: 176px; padding: 12px 6px; border-radius: 16px; }
+  .DisplayMetric .DisplayMetricHeader::before { width: 34px; height: 34px; font-size: 20px; border-radius: 10px; }
+  .DisplayMetric .DisplayMetricHeader > div:nth-child(1) { font-size: 10px; letter-spacing: .08em; text-align: center; }
+  .DisplayMetric .circleChart { transform: scale(.72); margin: -14px 0 -20px; }
+  .DisplayMetric .DisplayMetricHeader > div:nth-child(2) { font-size: 15px; }
+  #AMP_Core_ServerStatus { gap: 12px !important; flex-wrap: wrap; }
+  #AMP_Core_ServerStatus button.slideIcon { width: 90px; height: 90px; }
+  #AMP_Core_ServerStatus button .mat-icon::after { font-size: 26px; }
+  #AMP_Core_ServerStatus button span:first-child::before { font-size: 11px; }
+  #statusActions > div:nth-child(2) div.listenPort:first-of-type > span:last-child { font-size: 17px; }
+  #statusActions > div { padding: 12px 14px; }
+}
+
+/* Each server card's blurred picture gets its own layer: blurred once, not again on every figure update. */
+.InstanceList .ServerEntry .ServerEntryImage { transform: translateZ(0); }
+
+/* ═══════ Side menu folded to icons (window narrower than 1000 px) ═══════
+   AMP shrinks the menu to 64 px; with our 10 px margins each link was 44 px wide: icon cut and badge sitting on the
+   next icon. Icon centred on the full width, badge at the bottom right of the icon. Only between 661 and 1000 px:
+   below that, AMP switches to its sliding phone menu, with labels. */
+@media screen and (min-width: 661px) and (max-width: 1000px) {
+  #sideMenuPresenter > a > div, #sideMenuPresenter > a > span:not(.mat-icon), .multiMenuContainer > a > div, .multiMenuContainer > a > span:not(.mat-icon) { display: none; }
+  #sideMenu a { margin: 2px 4px; justify-content: flex-start; }
+  #sideMenu a > .mat-icon:first-child, #sideMenu a > img:first-child { flex: 0 0 56px; width: 56px; padding: 10px 0 !important; margin: 0 !important; text-align: center; font-size: 26px !important; }
+  #sideMenu a > .mat-icon.warn { position: absolute; left: 32px; top: 26px; margin: 0 !important; padding: 1px !important; font-size: 15px !important; line-height: 1; height: auto; width: auto; border-radius: 50%; background: var(--tk-fond); }
+  #sideMenu a.padBottom::after { left: 4px; right: 4px; }
+}
